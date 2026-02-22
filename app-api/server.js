@@ -1,10 +1,10 @@
 const path = require('path');
 const fs = require('fs');
 
-// Load .env; if missing, use env.example so app works without copying the file
-require('dotenv').config();
+// Load .env; if missing, use env.example. override: false so deployment platform env vars win.
+require('dotenv').config({ override: false });
 if (!fs.existsSync(path.join(__dirname, '.env')) && fs.existsSync(path.join(__dirname, 'env.example'))) {
-  require('dotenv').config({ path: path.join(__dirname, 'env.example') });
+  require('dotenv').config({ path: path.join(__dirname, 'env.example'), override: false });
   console.log('📄 Loaded env.example (no .env found)');
 }
 
@@ -94,11 +94,18 @@ app.use('/uploads', express.static('uploads'));
 
 // Health check endpoint (and /health.php for hosts that probe that path)
 const healthPayload = (req, res) => {
+  const dbHost = (process.env.DB_HOST || '').trim();
+  const dbSet = !!dbHost && dbHost !== '127.0.0.1' && dbHost !== 'localhost';
   res.json({
     status: 'OK',
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV
+    environment: process.env.NODE_ENV,
+    db: {
+      hostSet: !!dbHost,
+      hostIsRemote: dbSet,
+      hint: dbSet ? 'DB_HOST looks like remote host' : 'Set DB_HOST to your MySQL host (e.g. srv1149167.hstgr.cloud) in deployment env'
+    }
   });
 };
 app.get('/health', healthPayload);

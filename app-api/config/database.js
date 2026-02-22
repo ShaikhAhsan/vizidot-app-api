@@ -1,5 +1,5 @@
 const { Sequelize } = require('sequelize');
-require('dotenv').config();
+require('dotenv').config({ override: false });
 
 /**
  * Single database connection for the entire app.
@@ -9,22 +9,32 @@ require('dotenv').config();
 const required = ['DB_HOST', 'DB_NAME', 'DB_USER', 'DB_PASSWORD'];
 const missing = required.filter((k) => !process.env[k] || !String(process.env[k]).trim());
 if (missing.length) {
-  console.error('❌ Missing required env:', missing.join(', '), '— copy env.example to .env and set these.');
+  console.error('❌ Missing required env:', missing.join(', '), '— set these in your deployment environment or .env');
   throw new Error(`Missing env: ${missing.join(', ')}`);
 }
 
+let dbHost = (process.env.DB_HOST || '').trim();
+if (process.env.DB_HOST_IP) {
+  dbHost = (process.env.DB_HOST_IP || '').trim();
+  console.log('🌐 Using DB_HOST_IP:', dbHost);
+}
+
+// In deployment, DB_HOST must be the remote DB host (e.g. srv1149167.hstgr.cloud), not localhost
+const isLocalhost = !dbHost || dbHost === '127.0.0.1' || dbHost === 'localhost' || dbHost === '::1';
+if (isLocalhost && process.env.NODE_ENV === 'production') {
+  console.error('❌ DB_HOST is localhost/empty in production. Set DB_HOST to your remote MySQL host (e.g. srv1149167.hstgr.cloud) in the deployment environment.');
+  throw new Error('DB_HOST must be your remote database host in production, not localhost');
+}
+if (isLocalhost) {
+  console.warn('⚠️ DB_HOST is localhost — fine for local dev; for deployment set DB_HOST to your remote MySQL host in the app environment.');
+}
+
 console.log('📊 Database Configuration:');
-console.log('  DB_HOST:', process.env.DB_HOST);
+console.log('  DB_HOST:', dbHost || '(empty)');
 console.log('  DB_PORT:', process.env.DB_PORT || '3306');
 console.log('  DB_NAME:', process.env.DB_NAME);
 console.log('  DB_USER:', process.env.DB_USER);
 console.log('  DB_PASSWORD: ***SET***');
-
-let dbHost = process.env.DB_HOST;
-if (process.env.DB_HOST_IP) {
-  dbHost = process.env.DB_HOST_IP;
-  console.log('🌐 Using DB_HOST_IP:', dbHost);
-}
 
 const baseSequelizeConfig = {
   host: dbHost,
