@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const dns = require('dns').promises;
 
 // Load .env; if missing, use env.example. override: false so deployment platform env vars win.
 require('dotenv').config({ override: false });
@@ -153,6 +154,20 @@ const initializeApp = async () => {
 
     // Test database connection (in development, allow server to start even if DB fails)
     let dbOk = false;
+    const connectHost = process.env.DB_HOST_IP || process.env.DB_HOST;
+    if (connectHost && !process.env.DB_HOST_IP) {
+      try {
+        const resolved = await dns.lookup(connectHost, { family: 4 });
+        if (resolved && (resolved.address === '127.0.0.1' || resolved.address === '127.0.1.1')) {
+          console.error('❌ DB_HOST "' + connectHost + '" resolves to ' + resolved.address + ' (loopback) inside this container.');
+          console.error('   MySQL is not on loopback here. Set DB_HOST_IP to the actual IP of your MySQL server');
+          console.error('   (e.g. from your hosting panel, or run "ping ' + connectHost + '" from outside Docker) and redeploy.');
+          if (process.env.NODE_ENV === 'production') {
+            process.exit(1);
+          }
+        }
+      } catch (_) { /* ignore DNS errors */ }
+    }
     try {
       await sequelize.authenticate();
       console.log('✅ Database connection established successfully');
@@ -162,6 +177,9 @@ const initializeApp = async () => {
       }
     } catch (dbError) {
       console.error('⚠️ Database connection failed:', dbError.message);
+      if ((dbError.message || '').includes('127.0.1.1') || (dbError.message || '').includes('127.0.0.1')) {
+        console.error('   → Connection went to loopback. In Coolify/Docker, set DB_HOST_IP to the MySQL server IP (not hostname) and redeploy.');
+      }
       if (process.env.NODE_ENV === 'production') {
         console.error('❌ Exiting in production when DB is unavailable.');
         process.exit(1);
