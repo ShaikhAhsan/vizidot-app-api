@@ -1,0 +1,74 @@
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
+
+const VideoTrack = sequelize.define('VideoTrack', {
+  video_id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    field: 'video_id'
+  },
+  album_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    field: 'album_id'
+  },
+  title: {
+    type: DataTypes.STRING(255),
+    allowNull: false
+  },
+  duration: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    comment: 'Duration in seconds'
+  },
+  video_url: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    field: 'video_url'
+  },
+  thumbnail_url: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    field: 'thumbnail_url'
+  },
+  resolution: {
+    type: DataTypes.STRING(20),
+    allowNull: true
+  },
+  track_number: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1,
+    field: 'track_number'
+  },
+  is_deleted: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'is_deleted'
+  },
+  deleted_at: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'deleted_at'
+  }
+}, {
+  tableName: 'video_tracks',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  underscored: true,
+  defaultScope: {
+    where: { is_deleted: false }
+  },
+  scopes: {
+    withDeleted: {
+      where: {}
+    },
+    deleted: {
+      where: { is_deleted: true }
+    }
+  }
+});
+
+module.exports = VideoTrack;
+

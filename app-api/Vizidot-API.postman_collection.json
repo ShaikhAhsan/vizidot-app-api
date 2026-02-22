@@ -1,0 +1,324 @@
+{
+  "info": {
+    "name": "Vizidot API",
+    "description": "Complete API collection for Vizidot backend. Base URL: {{baseUrl}} (e.g. http://localhost:8000). Use {{token}} for Authorization: Bearer where required.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        { "name": "Health Check", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/health" } }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        { "name": "Register", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"phone\": \"\",\n  \"countryCode\": \"+92\",\n  \"role\": \"customer\"\n}" }, "url": "{{baseUrl}}/api/v1/auth/register" } },
+        { "name": "Login", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"idToken\": \"<firebase-id-token>\"\n}" }, "url": "{{baseUrl}}/api/v1/auth/login" } },
+        { "name": "Forgot Password", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\"\n}" }, "url": "{{baseUrl}}/api/v1/auth/forgot-password" } },
+        { "name": "Get Me", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/auth/me" } },
+        { "name": "Update Me", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/auth/me" } },
+        { "name": "Change Password", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"currentPassword\": \"\",\n  \"newPassword\": \"\"\n}" }, "url": "{{baseUrl}}/api/v1/auth/change-password" } },
+        { "name": "Logout", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/auth/logout" } },
+        { "name": "Verify Token", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"idToken\": \"\"\n}" }, "url": "{{baseUrl}}/api/v1/auth/verify-token" } },
+        { "name": "Set Role (System Admin)", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"userId\": \"\",\n  \"role\": \"\"\n}" }, "url": "{{baseUrl}}/api/v1/auth/set-role" } }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        { "name": "Get Profile", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/users/profile" } },
+        { "name": "Update Profile", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/users/profile" } },
+        { "name": "Get Stats", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/users/stats" } },
+        { "name": "Deactivate", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/users/deactivate" } },
+        { "name": "Reactivate", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/users/reactivate" } }
+      ]
+    },
+    {
+      "name": "Businesses",
+      "item": [
+        { "name": "List Public", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/businesses/public" } },
+        { "name": "Get Public by ID", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/businesses/public/1" } },
+        { "name": "List (Auth)", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/businesses" } },
+        { "name": "Create", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/businesses" } },
+        { "name": "Get by ID", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/businesses/1" } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/businesses/1" } },
+        { "name": "Update Timings", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/businesses/1/timings" } },
+        { "name": "Get Stats", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/businesses/1/stats" } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/businesses/1" } }
+      ]
+    },
+    {
+      "name": "Products",
+      "item": [
+        { "name": "List Public", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/products/public" } },
+        { "name": "Get Public by ID", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/products/public/1" } },
+        { "name": "List by Business", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/products/business/1" } },
+        { "name": "Create", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/products/business/1" } },
+        { "name": "Get by ID", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/products/1" } },
+        { "name": "Update", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/products/1" } },
+        { "name": "Update Stock", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"stock\": 0\n}" }, "url": "{{baseUrl}}/api/v1/products/1/stock" } },
+        { "name": "Delete", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/products/1" } },
+        { "name": "Bulk Update", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "[]" }, "url": "{{baseUrl}}/api/v1/products/bulk-update" } }
+      ]
+    },
+    {
+      "name": "Orders",
+      "item": [
+        { "name": "Get Order (Public)", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/orders/public/1" } },
+        { "name": "Create Order", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/orders" } },
+        { "name": "Get User Orders", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/orders/user" } },
+        { "name": "Get Order Details", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/orders/1" } },
+        { "name": "Get Order Updates", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/orders/1/updates" } },
+        { "name": "Get Business Orders", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/orders/business/orders" } },
+        { "name": "Update Order Status", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"status\": \"\"\n}" }, "url": "{{baseUrl}}/api/v1/orders/1/status" } },
+        { "name": "Send Chat Message", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"message\": \"\"\n}" }, "url": "{{baseUrl}}/api/v1/orders/1/chat/message" } },
+        { "name": "Get Chat Messages", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/orders/1/chat/messages" } },
+        { "name": "Get Chat History", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/orders/1/chat/history" } },
+        { "name": "Mark Chat Read", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/orders/1/chat/read" } },
+        { "name": "Get Chat List", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/orders/chat/list" } }
+      ]
+    },
+    {
+      "name": "Upload",
+      "item": [
+        { "name": "Upload Image", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "body": { "mode": "formdata", "formdata": [{"key": "image", "type": "file", "src": []}] }, "url": "{{baseUrl}}/api/v1/upload/image" } },
+        { "name": "Upload Images (multi)", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "body": { "mode": "formdata", "formdata": [{"key": "images", "type": "file", "src": []}] }, "url": "{{baseUrl}}/api/v1/upload/images" } },
+        { "name": "Delete Image", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/upload/image/:filename" } }
+      ]
+    },
+    {
+      "name": "Units",
+      "item": [
+        { "name": "List Units", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/units" } },
+        { "name": "Create Unit", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/units" } },
+        { "name": "Increment Usage", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/units/1/increment-usage" } },
+        { "name": "Get by Name", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/units/by-name/kilogram" } }
+      ]
+    },
+    {
+      "name": "Music - Artists",
+      "item": [
+        { "name": "Get Artist Profile (Public)", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/artists/profile/1" } },
+        { "name": "List Artists (Public)", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/artists/public?page=1&limit=20&search=" } },
+        { "name": "List Artists", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/artists" } },
+        { "name": "List Deleted Artists", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/artists/deleted" } },
+        { "name": "Get Artist", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/artists/1" } },
+        { "name": "Create Artist", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/artists" } },
+        { "name": "Update Artist", "request": { "method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/artists/1" } },
+        { "name": "Delete Artist", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/music/artists/1" } },
+        { "name": "Restore Artist", "request": { "method": "POST", "header": [], "url": "{{baseUrl}}/api/v1/music/artists/1/restore" } },
+        { "name": "Follow Artist (Auth)", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/music/artists/1/follow" } },
+        { "name": "Unfollow Artist (Auth)", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/music/artists/1/follow" } }
+      ]
+    },
+    {
+      "name": "Music - Brandings",
+      "item": [
+        { "name": "List Brandings", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/brandings" } },
+        { "name": "Get Branding", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/brandings/1" } },
+        { "name": "Create Branding", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/brandings" } },
+        { "name": "Update Branding", "request": { "method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/brandings/1" } },
+        { "name": "Delete Branding", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/music/brandings/1" } }
+      ]
+    },
+    {
+      "name": "Music - Shops",
+      "item": [
+        { "name": "List Shops", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/shops" } },
+        { "name": "Get Shop", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/shops/1" } },
+        { "name": "Create Shop", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/shops" } },
+        { "name": "Update Shop", "request": { "method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/shops/1" } },
+        { "name": "Delete Shop", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/music/shops/1" } }
+      ]
+    },
+    {
+      "name": "Music - Albums",
+      "item": [
+        { "name": "List Albums (Public)", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/albums/public?page=1&limit=20" } },
+        { "name": "Get Album Profile (Public)", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/albums/profile/1" } },
+        { "name": "List Albums", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/albums" } },
+        { "name": "Get Album", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/albums/1" } },
+        { "name": "Create Album", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/albums" } },
+        { "name": "Update Album", "request": { "method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/albums/1" } },
+        { "name": "Delete Album", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/music/albums/1" } },
+        { "name": "Get Audio Tracks", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/albums/1/audio-tracks" } },
+        { "name": "Add Audio Track", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/albums/1/audio-tracks" } },
+        { "name": "Update Audio Track", "request": { "method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/audio-tracks/1" } },
+        { "name": "Delete Audio Track", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/music/audio-tracks/1" } },
+        { "name": "Get Video Tracks", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/albums/1/video-tracks" } },
+        { "name": "Add Video Track", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/albums/1/video-tracks" } },
+        { "name": "Update Video Track", "request": { "method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/video-tracks/1" } },
+        { "name": "Delete Video Track", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/music/video-tracks/1" } },
+        { "name": "Get Collaborators", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/albums/1/collaborators" } },
+        { "name": "Add Collaborator", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/music/albums/1/collaborators" } },
+        { "name": "Remove Collaborator", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/music/albums/1/collaborators/1" } },
+        { "name": "Get Audio Track Artists", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/audio-tracks/1/artists" } },
+        { "name": "Add Audio Track Artist", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"artist_id\": 1,\n  \"role\": \"Featured\"\n}" }, "url": "{{baseUrl}}/api/v1/music/audio-tracks/1/artists" } },
+        { "name": "Remove Audio Track Artist", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/music/audio-tracks/1/artists/1" } },
+        { "name": "Get Video Track Artists", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/music/video-tracks/1/artists" } },
+        { "name": "Add Video Track Artist", "request": { "method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"artist_id\": 1,\n  \"role\": \"Featured\"\n}" }, "url": "{{baseUrl}}/api/v1/music/video-tracks/1/artists" } },
+        { "name": "Remove Video Track Artist", "request": { "method": "DELETE", "header": [], "url": "{{baseUrl}}/api/v1/music/video-tracks/1/artists/1" } }
+      ]
+    },
+    {
+      "name": "Media",
+      "item": [
+        { "name": "Upload Album Media (audio/video)", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "body": { "mode": "formdata", "formdata": [{"key": "files", "type": "file", "src": []}] }, "url": "{{baseUrl}}/api/v1/media/albums/1/media?type=audio" } }
+      ]
+    },
+    {
+      "name": "Admin - Test & Debug",
+      "item": [
+        { "name": "Admin Test", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/admin/test" } },
+        { "name": "Debug Product", "request": { "method": "GET", "header": [], "url": "{{baseUrl}}/api/v1/admin/debug-product/1" } }
+      ]
+    },
+    {
+      "name": "Admin - Users",
+      "item": [
+        { "name": "List Users", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "x-business-id", "value": "", "disabled": true}], "url": "{{baseUrl}}/api/v1/admin/users?page=1&limit=10&search=&sortBy=created_at&sortOrder=DESC" } },
+        { "name": "Get User", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/users/1" } },
+        { "name": "Create User", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/users" } },
+        { "name": "Update User", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/users/1" } },
+        { "name": "Delete User", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/users/1" } },
+        { "name": "Get User Artists", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/users/1/artists" } },
+        { "name": "Assign User Artists", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"artist_ids\": []\n}" }, "url": "{{baseUrl}}/api/v1/admin/users/1/artists" } },
+        { "name": "Users Bulk Delete", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"ids\": []\n}" }, "url": "{{baseUrl}}/api/v1/admin/users/bulk-delete" } },
+        { "name": "Users Bulk Update", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/users/bulk-update" } },
+        { "name": "Users Stats Overview", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/users/stats/overview" } }
+      ]
+    },
+    {
+      "name": "Admin - Businesses",
+      "item": [
+        { "name": "List Businesses", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/businesses" } },
+        { "name": "Get Business", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/businesses/1" } },
+        { "name": "Create Business", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/businesses" } },
+        { "name": "Update Business", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/businesses/1" } },
+        { "name": "Delete Business", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/businesses/1" } },
+        { "name": "Businesses Bulk Delete", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"ids\": []\n}" }, "url": "{{baseUrl}}/api/v1/admin/businesses/bulk-delete" } },
+        { "name": "Businesses Bulk Update", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/businesses/bulk-update" } },
+        { "name": "Businesses Stats Overview", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/businesses/stats/overview" } }
+      ]
+    },
+    {
+      "name": "Admin - Business Timings",
+      "item": [
+        { "name": "List Business Timings", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/business-timings" } },
+        { "name": "Get Business Timing", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/business-timings/1" } },
+        { "name": "Create Business Timing", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/business-timings" } },
+        { "name": "Update Business Timing", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/business-timings/1" } },
+        { "name": "Delete Business Timing", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/business-timings/1" } }
+      ]
+    },
+    {
+      "name": "Admin - Categories",
+      "item": [
+        { "name": "List Categories", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "x-business-id", "value": "", "disabled": true}], "url": "{{baseUrl}}/api/v1/admin/categories" } },
+        { "name": "Get Category", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/categories/1" } },
+        { "name": "Create Category", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/categories" } },
+        { "name": "Update Category", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/categories/1" } },
+        { "name": "Delete Category", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/categories/1" } },
+        { "name": "Categories Bulk Delete", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"ids\": []\n}" }, "url": "{{baseUrl}}/api/v1/admin/categories/bulk-delete" } },
+        { "name": "Categories Bulk Update", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/categories/bulk-update" } },
+        { "name": "Assign Products to Category", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"product_ids\": []\n}" }, "url": "{{baseUrl}}/api/v1/admin/categories/1/assign-products" } },
+        { "name": "Remove Products from Category", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"product_ids\": []\n}" }, "url": "{{baseUrl}}/api/v1/admin/categories/1/remove-products" } }
+      ]
+    },
+    {
+      "name": "Admin - Products",
+      "item": [
+        { "name": "List Products", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "x-business-id", "value": "", "disabled": true}], "url": "{{baseUrl}}/api/v1/admin/products?page=1&limit=10&search=&sortBy=created_at&sortOrder=DESC" } },
+        { "name": "Get Product", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/products/1" } },
+        { "name": "Create Product", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/products" } },
+        { "name": "Update Product", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/products/1" } },
+        { "name": "Delete Product", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/products/1" } },
+        { "name": "Products Bulk Delete", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"ids\": []\n}" }, "url": "{{baseUrl}}/api/v1/admin/products/bulk-delete" } },
+        { "name": "Products Bulk Update", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/products/bulk-update" } },
+        { "name": "Products Stats Overview", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/products/stats/overview" } }
+      ]
+    },
+    {
+      "name": "Admin - Orders & Order Items",
+      "item": [
+        { "name": "List Orders", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "x-business-id", "value": "", "disabled": true}], "url": "{{baseUrl}}/api/v1/admin/orders?page=1&limit=10" } },
+        { "name": "Get Order", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/orders/1" } },
+        { "name": "Update Order", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/orders/1" } },
+        { "name": "List Order Items", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/order-items" } },
+        { "name": "Get Order Item", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/order-items/1" } },
+        { "name": "Update Order Item", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/order-items/1" } }
+      ]
+    },
+    {
+      "name": "Admin - Coupons",
+      "item": [
+        { "name": "List Coupons", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "x-business-id", "value": "", "disabled": true}], "url": "{{baseUrl}}/api/v1/admin/coupons" } },
+        { "name": "Get Coupon", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/coupons/1" } },
+        { "name": "Create Coupon", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/coupons" } },
+        { "name": "Update Coupon", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/coupons/1" } },
+        { "name": "Delete Coupon", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/coupons/1" } },
+        { "name": "Coupons Bulk Delete", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"ids\": []\n}" }, "url": "{{baseUrl}}/api/v1/admin/coupons/bulk-delete" } },
+        { "name": "Coupons Bulk Update", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/coupons/bulk-update" } }
+      ]
+    },
+    {
+      "name": "Admin - Reviews",
+      "item": [
+        { "name": "List Reviews", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "x-business-id", "value": "", "disabled": true}], "url": "{{baseUrl}}/api/v1/admin/reviews" } },
+        { "name": "Get Review", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/reviews/1" } },
+        { "name": "Update Review", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/reviews/1" } },
+        { "name": "Delete Review", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/reviews/1" } },
+        { "name": "Reviews Bulk Delete", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"ids\": []\n}" }, "url": "{{baseUrl}}/api/v1/admin/reviews/bulk-delete" } },
+        { "name": "Reviews Bulk Update", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/reviews/bulk-update" } }
+      ]
+    },
+    {
+      "name": "Admin - Carts & Cart Items",
+      "item": [
+        { "name": "List Carts", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/carts" } },
+        { "name": "Get Cart", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/carts/1" } },
+        { "name": "List Cart Items", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/cart-items" } },
+        { "name": "Get Cart Item", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/cart-items/1" } }
+      ]
+    },
+    {
+      "name": "Admin - Dashboard",
+      "item": [
+        { "name": "Dashboard Stats", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "x-business-id", "value": "", "disabled": true}], "url": "{{baseUrl}}/api/v1/admin/dashboard/stats" } }
+      ]
+    },
+    {
+      "name": "Admin - Brands",
+      "item": [
+        { "name": "List Brands", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/brands" } },
+        { "name": "Get Brand", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/brands/1" } },
+        { "name": "Create Brand", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/brands" } },
+        { "name": "Update Brand", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/brands/1" } },
+        { "name": "Delete Brand", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/brands/1" } },
+        { "name": "Brands Bulk Delete", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"ids\": []\n}" }, "url": "{{baseUrl}}/api/v1/admin/brands/bulk-delete" } },
+        { "name": "Brands Bulk Update", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/brands/bulk-update" } }
+      ]
+    },
+    {
+      "name": "Admin - Roles & Tags",
+      "item": [
+        { "name": "List Roles", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/roles" } },
+        { "name": "List Tags", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/tags" } },
+        { "name": "Get Tag", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/tags/1" } },
+        { "name": "Create Tag", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/tags" } },
+        { "name": "Update Tag", "request": { "method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/tags/1" } },
+        { "name": "Delete Tag", "request": { "method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/tags/1" } },
+        { "name": "Tags Bulk Delete", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"ids\": []\n}" }, "url": "{{baseUrl}}/api/v1/admin/tags/bulk-delete" } },
+        { "name": "Tags Bulk Update", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{}" }, "url": "{{baseUrl}}/api/v1/admin/tags/bulk-update" } },
+        { "name": "Tags Search", "request": { "method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/api/v1/admin/tags/search?q=" } },
+        { "name": "Tags Create If Not Exists", "request": { "method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}, {"key": "Content-Type", "value": "application/json"}], "body": { "mode": "raw", "raw": "{\n  \"names\": []\n}" }, "url": "{{baseUrl}}/api/v1/admin/tags/create-if-not-exists" } }
+      ]
+    }
+  ]
+}
