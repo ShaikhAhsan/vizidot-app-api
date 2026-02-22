@@ -70,18 +70,13 @@ if (process.env.DB_SOCKET) {
   };
 }
 
+// Do NOT add socketPath to dialectOptions — mysql2 ignores host/port when socketPath is present
+// (even socketPath: undefined can trigger socket behaviour and 127.0.0.1/127.0.1.1 connection)
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USER,
   process.env.DB_PASSWORD,
-  {
-    ...baseSequelizeConfig,
-    // Force TCP connection instead of socket
-    dialectOptions: {
-      ...baseSequelizeConfig.dialectOptions,
-      socketPath: undefined, // Explicitly disable socket path
-    }
-  }
+  baseSequelizeConfig
 );
 
 // Log the actual connection config being used
