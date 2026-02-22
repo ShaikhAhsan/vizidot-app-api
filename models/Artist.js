@@ -39,6 +39,16 @@ const Artist = sequelize.define('Artist', {
     defaultValue: true,
     field: 'is_active'
   },
+  is_featured: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'is_featured'
+  },
+  is_rising_star: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    field: 'is_rising_star'
+  },
   is_deleted: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,

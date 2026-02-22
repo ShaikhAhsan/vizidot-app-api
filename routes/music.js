@@ -21,6 +21,7 @@ router.get('/', (req, res) => {
     module: 'music',
     endpoints: [
       'GET /home',
+      'GET /elocker',
       'GET /categories',
       'POST /categories/selected',
       'GET /artists',
@@ -672,6 +673,50 @@ router.get('/albums/:id', async (req, res) => {
   } catch (err) {
     console.error('Album detail error:', err);
     return res.status(500).json({ success: false, error: 'Could not load album' });
+  }
+});
+
+/**
+ * GET /api/v1/music/elocker
+ * E-locker screen: featured artists and rising star artists. Public.
+ * Uses artists.is_featured and artists.is_rising_star. Run scripts/addArtistFeaturedRisingStar.sql to add columns.
+ */
+router.get('/elocker', async (req, res) => {
+  try {
+    const [featuredRows, risingRows] = await Promise.all([
+      Artist.findAll({
+        where: { is_active: true, is_featured: true },
+        order: [['name', 'ASC'], ['artist_id', 'ASC']],
+        attributes: ['artist_id', 'name', 'image_url']
+      }),
+      Artist.findAll({
+        where: { is_active: true, is_rising_star: true },
+        order: [['name', 'ASC'], ['artist_id', 'ASC']],
+        attributes: ['artist_id', 'name', 'image_url']
+      })
+    ]);
+    const featuredArtists = featuredRows.map((r) => ({
+      id: r.artist_id,
+      name: r.name ?? '',
+      imageUrl: r.image_url ?? null
+    }));
+    const risingStarArtists = risingRows.map((r) => ({
+      id: r.artist_id,
+      name: r.name ?? '',
+      imageUrl: r.image_url ?? null
+    }));
+    return res.json({
+      success: true,
+      data: { featuredArtists, risingStarArtists }
+    });
+  } catch (err) {
+    const noCol = err.name === 'SequelizeDatabaseError' && /Unknown column 'is_featured'|Unknown column 'is_rising_star'/.test(err.message || '');
+    if (noCol) {
+      console.warn('E-locker: run scripts/addArtistFeaturedRisingStar.sql to add is_featured, is_rising_star to artists table.');
+      return res.json({ success: true, data: { featuredArtists: [], risingStarArtists: [] } });
+    }
+    console.error('E-locker error:', err);
+    return res.status(500).json({ success: false, error: 'Could not fetch elocker data' });
   }
 });
 

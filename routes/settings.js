@@ -29,7 +29,7 @@ router.get('/', optionalAuth, async (req, res) => {
         attributes: ['id', 'email', 'first_name', 'last_name', 'profile_image', 'is_onboarded'],
         raw: true
       });
-      const isOnboarded = userRow?.is_onboarded === true;
+      const isOnboarded = !!(userRow?.is_onboarded);
       userSettings = {
         enableNotifications: !!row.enable_notifications,
         messageNotifications: !!row.message_notifications,
@@ -130,7 +130,7 @@ router.patch('/', authenticateToken, async (req, res) => {
     }
 
     const userRow = await User.findByPk(userId, { attributes: ['is_onboarded'], raw: true });
-    const isOnboarded = userRow?.is_onboarded === true;
+    const isOnboarded = !!(userRow?.is_onboarded);
 
     return res.json({
       success: true,
