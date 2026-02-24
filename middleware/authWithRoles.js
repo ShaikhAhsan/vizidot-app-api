@@ -5,6 +5,8 @@ const { User } = require('../models');
 // Non-expiring test token for API testing. Set TEST_ACCESS_TOKEN in .env to override.
 const TEST_ACCESS_TOKEN = (process.env.TEST_ACCESS_TOKEN || 'test-token-no-expire').trim();
 const isProduction = process.env.NODE_ENV === 'production';
+// Set ALLOW_TEST_TOKEN=true to accept test token even when NODE_ENV=production (e.g. for Postman testing).
+const allowTestToken = (process.env.ALLOW_TEST_TOKEN || '').toLowerCase() === 'true';
 
 async function attachDemoUser(req, res, next) {
   try {
@@ -54,8 +56,8 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    // Non-expiring test token for testing all APIs (ignored in production)
-    if (!isProduction && (token === TEST_ACCESS_TOKEN || token === 'demo-token-123')) {
+    // Test token: accepted in development, or in production when ALLOW_TEST_TOKEN=true
+    if ((!isProduction || allowTestToken) && (token === TEST_ACCESS_TOKEN || token === 'demo-token-123')) {
       return attachDemoUser(req, res, next);
     }
 
