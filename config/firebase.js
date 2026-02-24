@@ -23,14 +23,27 @@ const initializeFirebase = async () => {
         ? rawValue
         : Buffer.from(rawValue, 'base64').toString('utf8');
 
+      let parsed;
       try {
-        return JSON.parse(maybeDecoded);
+        parsed = JSON.parse(maybeDecoded);
       } catch (error) {
         console.error('Invalid FIREBASE_SERVICE_ACCOUNT_JSON value. Make sure it is valid JSON or base64 encoded JSON.');
         throw error;
       }
+
+      const key = parsed.private_key;
+      if (!key || typeof key !== 'string') {
+        throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is missing "private_key". Re-download the service account JSON from Firebase Console.');
+      }
+      if (!key.includes('BEGIN PRIVATE KEY') || !key.includes('END PRIVATE KEY')) {
+        throw new Error(
+          'FIREBASE_SERVICE_ACCOUNT_JSON "private_key" looks truncated or invalid. ' +
+          'Use base64 encoding: run `node -e "console.log(require(\'fs\').readFileSync(\'path-to-key.json\', \'base64\'))"` and set that as FIREBASE_SERVICE_ACCOUNT_JSON.'
+        );
+      }
+      return parsed;
     })();
-    
+
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       databaseURL: process.env.FIREBASE_DATABASE_URL || 'https://vizidot-4b492.firebaseio.com',
