@@ -43,9 +43,15 @@ try {
   process.exit(1);
 }
 
-const key = parsed.private_key;
+let key = parsed.private_key;
 console.log('Has private_key:', !!key);
 if (key) {
+  // Env vars often store newlines as literal \n (backslash + n). Fix for PEM.
+  if (key.includes('\\n') && !key.includes('\n')) {
+    parsed.private_key = key.replace(/\\n/g, '\n');
+    key = parsed.private_key;
+    console.log('Fixed private_key: replaced literal \\n with real newlines.');
+  }
   const hasBegin = key.includes('BEGIN PRIVATE KEY');
   const hasEnd = key.includes('END PRIVATE KEY');
   console.log('Private key has BEGIN/END:', hasBegin && hasEnd);

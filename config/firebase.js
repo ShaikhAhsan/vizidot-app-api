@@ -31,9 +31,14 @@ const initializeFirebase = async () => {
         throw error;
       }
 
-      const key = parsed.private_key;
+      let key = parsed.private_key;
       if (!key || typeof key !== 'string') {
         throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is missing "private_key". Re-download the service account JSON from Firebase Console.');
+      }
+      // Env vars often turn newlines into literal \n (backslash + n). Restore real newlines for PEM.
+      if (key.includes('\\n') && !key.includes('\n')) {
+        parsed.private_key = key.replace(/\\n/g, '\n');
+        key = parsed.private_key;
       }
       if (!key.includes('BEGIN PRIVATE KEY') || !key.includes('END PRIVATE KEY')) {
         throw new Error(
