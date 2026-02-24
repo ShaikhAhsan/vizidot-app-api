@@ -54,10 +54,23 @@ const initializeFirebase = async () => {
 };
 
 const getFirebaseInstance = () => {
-  if (!db || !auth) {
+  if (!admin.apps.length) {
     throw new Error('Firebase not initialized. Call initializeFirebase() first.');
   }
-  return { admin, db, auth };
+  return {
+    admin,
+    db: admin.firestore(),
+    auth: admin.auth(),
+    messaging: admin.messaging()
+  };
+};
+
+/** Get FCM messaging instance for push notifications. Requires Firebase to be initialized. */
+const getMessaging = () => {
+  if (!admin.apps.length) {
+    throw new Error('Firebase not initialized. Call initializeFirebase() first.');
+  }
+  return admin.messaging();
 };
 
 // Firebase utility functions
@@ -147,6 +160,7 @@ const firebaseUtils = {
 module.exports = {
   initializeFirebase,
   getFirebaseInstance,
+  getMessaging,
   firebaseUtils
 };
 

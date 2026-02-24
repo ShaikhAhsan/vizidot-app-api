@@ -41,6 +41,7 @@ const UserSettings = require('./UserSettings');
 const AppSetting = require('./AppSetting');
 const Device = require('./Device');
 const UserDevice = require('./UserDevice');
+const PushNotificationLog = require('./PushNotificationLog');
 
 // Define associations
 const defineAssociations = () => {
@@ -349,6 +350,7 @@ module.exports = {
   UserSettings,
   AppSetting,
   Device,
-  UserDevice
+  UserDevice,
+  PushNotificationLog
 };
 
