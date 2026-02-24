@@ -34,7 +34,8 @@ router.post('/send', authenticateToken, async (req, res) => {
         successCount: result.successCount,
         failureCount: result.failureCount,
         total: result.total,
-        logId: result.logId
+        logId: result.logId,
+        errors: result.errors
       }
     });
   } catch (err) {

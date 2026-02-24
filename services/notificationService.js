@@ -193,7 +193,8 @@ async function sendPushNotification({ title, message, fcmTokens = [], data, imag
     successCount,
     failureCount,
     total,
-    logId: logRow ? logRow.id : null
+    logId: logRow ? logRow.id : null,
+    errors: errors.length ? errors.slice(0, 10) : undefined
   };
 }
 
