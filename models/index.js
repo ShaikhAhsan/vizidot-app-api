@@ -39,6 +39,8 @@ const MusicCategory = require('./MusicCategory');
 const UserMusicCategory = require('./UserMusicCategory');
 const UserSettings = require('./UserSettings');
 const AppSetting = require('./AppSetting');
+const Device = require('./Device');
+const UserDevice = require('./UserDevice');
 
 // Define associations
 const defineAssociations = () => {
@@ -61,6 +63,12 @@ const defineAssociations = () => {
 
   User.hasOne(UserSettings, { foreignKey: 'user_id', as: 'settings' });
   UserSettings.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+
+  // Device / FCM: user-device mapping for push notifications
+  User.hasMany(UserDevice, { foreignKey: 'user_id', as: 'userDevices' });
+  Device.hasMany(UserDevice, { foreignKey: 'device_id', as: 'userDevices' });
+  UserDevice.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+  UserDevice.belongsTo(Device, { foreignKey: 'device_id', as: 'device' });
 
   // User-Artist associations (many-to-many)
   User.belongsToMany(Artist, {
@@ -339,6 +347,8 @@ module.exports = {
   MusicCategory,
   UserMusicCategory,
   UserSettings,
-  AppSetting
+  AppSetting,
+  Device,
+  UserDevice
 };
 

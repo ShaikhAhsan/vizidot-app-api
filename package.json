@@ -10,7 +10,8 @@
     "sync": "node scripts/syncSchema.js",
     "create-tables": "node scripts/createTablesDirect.js",
     "get-create-tables": "node scripts/getCreateTables.js",
-    "test": "jest"
+    "test": "jest",
+    "check-device": "node scripts/check-device-api.js"
   },
   "dependencies": {
     "axios": "^1.12.2",

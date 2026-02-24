@@ -24,6 +24,7 @@ const errorHandler = require('./middleware/errorHandler');
 const authRoutes = require('./routes/auth');
 const musicRoutes = require('./routes/music');
 const settingsRoutes = require('./routes/settings');
+const deviceRoutes = require('./routes/device');
 
 const app = express();
 // Port: default 8000, override with PORT env (e.g. PORT=8001 when 8000 is in use)
@@ -124,6 +125,10 @@ app.get('/favicon.ico', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/music', musicRoutes);
 app.use('/api/v1/settings', settingsRoutes);
+// Device/FCM registration – required for push (POST /register, GET /health, POST /logout, GET /tokens)
+app.use('/api/v1/device', deviceRoutes);
+// Fallback: if a reverse proxy strips /api/v1, device routes still work at /device/*
+app.use('/device', deviceRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -192,6 +197,7 @@ const initializeApp = async () => {
       console.log(`🚀 Vizidot App API running on port ${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
       console.log(`🔗 API Base URL: http://localhost:${PORT}/api/v1`);
+      console.log(`📱 Device API: POST /api/v1/device/register, GET /api/v1/device/health`);
       if (!dbOk) console.warn('🟡 DB not connected – set .env for DB-backed routes.');
     });
   } catch (error) {
