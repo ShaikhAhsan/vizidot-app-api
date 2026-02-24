@@ -82,6 +82,7 @@ async function sendPushNotification({ title, message, fcmTokens = [], data, imag
   }
 
   const dataPayload = stringifyData(data);
+  // Minimal notification payload (matches Firebase Console "Send test message" format)
   const notification = {
     title: String(title).slice(0, 255),
     body: String(message)
@@ -90,26 +91,18 @@ async function sendPushNotification({ title, message, fcmTokens = [], data, imag
     notification.imageUrl = String(imageUrl).trim();
   }
 
-  const androidConfig = {
-    priority: 'high',
-    notification: {
-      sound: 'default',
-      clickAction: 'FLUTTER_NOTIFICATION_CLICK'
-    }
+  // Build message to match Firebase Console "Send test message": notification + optional data.
+  // Use minimal payload; platform-specific options can cause FCM to reject valid tokens.
+  const baseMessage = {
+    notification,
+    ...(dataPayload && Object.keys(dataPayload).length > 0 && { data: dataPayload })
   };
-  const apnsConfig = {
-    payload: {
-      aps: {
-        sound: 'default',
-        'mutable-content': 1
-      }
-    },
-    fcmOptions: {
-      imageUrl: imageUrl && String(imageUrl).trim() ? String(imageUrl).trim() : undefined
-    }
-  };
+  // Add platform config only when needed; keep minimal.
+  baseMessage.android = { priority: 'high' };
+  baseMessage.apns = { payload: { aps: { sound: 'default' } } };
   if (imageUrl && String(imageUrl).trim()) {
-    apnsConfig.payload.aps['mutable-content'] = 1;
+    baseMessage.apns.fcmOptions = { imageUrl: String(imageUrl).trim() };
+    baseMessage.apns.payload.aps['mutable-content'] = 1;
   }
 
   let logRow = null;
@@ -142,10 +135,7 @@ async function sendPushNotification({ title, message, fcmTokens = [], data, imag
     return async () => {
       const multicast = {
         tokens: tokenBatch,
-        notification,
-        data: dataPayload || {},
-        android: androidConfig,
-        apns: apnsConfig
+        ...baseMessage
       };
       const response = await messaging.sendEachForMulticast(multicast);
       response.responses.forEach((r, idx) => {

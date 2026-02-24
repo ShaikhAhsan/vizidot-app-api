@@ -48,3 +48,11 @@ const result = await sendPushNotification({
 ## 5. Getting FCM tokens
 
 Use **GET /api/v1/device/tokens?userIds=1,2,3** (auth required) to get tokens by user IDs. Response: `{ tokensByUser: { "1": ["fcm1", "fcm2"], "2": ["fcm3"] } }`. Flatten the arrays if you need a single list for `fcmTokens`.
+
+## 6. Troubleshooting
+
+- **Token works in Firebase Console "Send test message" but fails from API (successCount: 0)**  
+  The FCM token is tied to a **Firebase project**. The service account in `FIREBASE_SERVICE_ACCOUNT_JSON` must be for the **same project** as the app that generated the token.  
+  - In Firebase Console, open your app’s project (e.g. vizidot-4b492) → Project settings → Service accounts.  
+  - Download the key from **that** project and use it as `FIREBASE_SERVICE_ACCOUNT_JSON`.  
+  - In the JSON, check `project_id` matches your app’s Firebase project.
