@@ -11,7 +11,8 @@
     "create-tables": "node scripts/createTablesDirect.js",
     "get-create-tables": "node scripts/getCreateTables.js",
     "test": "jest",
-    "check-device": "node scripts/check-device-api.js"
+    "check-device": "node scripts/check-device-api.js",
+    "check-firebase": "node scripts/check-firebase-credential.js"
   },
   "dependencies": {
     "axios": "^1.12.2",

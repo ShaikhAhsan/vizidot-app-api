@@ -16,11 +16,13 @@ const req = lib.get(url, (res) => {
   res.on('data', (ch) => { data += ch; });
   res.on('end', () => {
     if (res.statusCode === 200) {
-      const body = JSON.parse(data || '{}');
-      if (body.success && body.service === 'device') {
-        console.log('OK Device API is running at', url);
-        process.exit(0);
-      }
+      try {
+        const body = JSON.parse(data || '{}');
+        if (body.success && body.service === 'device') {
+          console.log('OK Device API is running at', url);
+          process.exit(0);
+        }
+      } catch (_) {}
     }
     console.error('Device API check failed:', res.statusCode, data || res.statusMessage);
     process.exit(1);
