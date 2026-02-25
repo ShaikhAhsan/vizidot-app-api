@@ -98,9 +98,11 @@ async function sendViaFirebaseFunction({ title, message, tokens, data, imageUrl,
         imageUrl: imageUrl && String(imageUrl).trim() || undefined
       })
     });
-    const body = await res.json().catch(() => ({}));
+    const text = await res.text();
+    const body = (() => { try { return JSON.parse(text); } catch (_) { return {}; } })();
     if (!res.ok) {
-      throw new Error(body.error || body.message || `HTTP ${res.status}`);
+      const msg = body.error || body.message || (text && text.slice(0, 200)) || `HTTP ${res.status}`;
+      throw new Error(msg);
     }
     successCount = body.successCount ?? 0;
     failureCount = body.failureCount ?? 0;
