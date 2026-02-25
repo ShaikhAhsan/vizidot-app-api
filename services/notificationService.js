@@ -58,7 +58,7 @@ function stringifyData(data) {
 /**
  * Send push via Firebase Cloud Function (HTTP). Logs to push_notification_log.
  */
-async function sendViaFirebaseFunction({ title, message, tokens, data, imageUrl, functionUrl, functionSecret }) {
+async function sendViaFirebaseFunction({ title, message, tokens, data, imageUrl, functionUrl }) {
   const total = tokens.length;
   let logRow = null;
   try {
@@ -90,7 +90,6 @@ async function sendViaFirebaseFunction({ title, message, tokens, data, imageUrl,
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        secret: functionSecret,
         title,
         message,
         fcmTokens: tokens,
@@ -138,8 +137,8 @@ async function sendViaFirebaseFunction({ title, message, tokens, data, imageUrl,
 
 /**
  * Send push notification to many FCM tokens in batches. Logs to push_notification_log.
- * If FIREBASE_SEND_PUSH_FUNCTION_URL and FIREBASE_SEND_PUSH_SECRET are set, calls the
- * Firebase Cloud Function instead (avoids credential/time issues on your server).
+ * If FIREBASE_SEND_PUSH_FUNCTION_URL is set, calls the Firebase Cloud Function instead
+ * (avoids credential/time issues on your server). No secret required.
  *
  * @param {Object} options
  * @param {string} options.title - Notification title
@@ -158,16 +157,14 @@ async function sendPushNotification({ title, message, fcmTokens = [], data, imag
   }
 
   const functionUrl = (process.env.FIREBASE_SEND_PUSH_FUNCTION_URL || '').trim();
-  const functionSecret = (process.env.FIREBASE_SEND_PUSH_SECRET || '').trim();
-  if (functionUrl && functionSecret) {
+  if (functionUrl) {
     return sendViaFirebaseFunction({
       title,
       message,
       tokens,
       data,
       imageUrl,
-      functionUrl,
-      functionSecret
+      functionUrl
     });
   }
 

@@ -2,12 +2,12 @@
 
 Send FCM push notifications in batches with history stored in the database.
 
-You can send either **from your API** (Firebase Admin on the server) or **via a Firebase Cloud Function** (recommended if you have credential/time issues on the server). Same API; the service switches automatically when the function URL and secret are set.
+You can send either **from your API** (Firebase Admin on the server) or **via a Firebase Cloud Function** (recommended if you have credential/time issues on the server). Same API; the service switches automatically when the function URL is set.
 
 ## 1. Prerequisites
 
 - **Option A – Send from your API**: `FIREBASE_SERVICE_ACCOUNT_JSON` must be set (same as for Auth). Firebase Admin is initialized in `server.js` via `initializeFirebase()`.
-- **Option B – Send via Firebase Function**: Deploy the function in `functions/` (see repo root `functions/README.md`), then set `FIREBASE_SEND_PUSH_FUNCTION_URL` and `FIREBASE_SEND_PUSH_SECRET` on your API. No Firebase credentials needed on the server.
+- **Option B – Send via Firebase Function**: Deploy the function in `functions/` (see repo root `functions/README.md`), then set `FIREBASE_SEND_PUSH_FUNCTION_URL` on your API. No Firebase credentials or secret needed on the server.
 - **Database**: Create the notification log table once (see below).
 
 ## 2. Create the notification log table
@@ -57,11 +57,9 @@ Use **GET /api/v1/device/tokens?userIds=1,2,3** (auth required) to get tokens by
 If your server has Firebase credential or time-sync issues (e.g. in Docker/Coolify), use the Firebase Function:
 
 1. Deploy the function: from repo root run `firebase deploy --only functions` (see `functions/README.md`).
-2. Set the function secret in Firebase (`firebase functions:config:set send_push.secret="..."` or env in Console).
-3. On your API server set:
+2. On your API server set:
    - `FIREBASE_SEND_PUSH_FUNCTION_URL` = the deployed function URL
-   - `FIREBASE_SEND_PUSH_SECRET` = the same secret
-4. Leave `FIREBASE_SERVICE_ACCOUNT_JSON` unset (or keep it for Auth only). The notification service will call the function instead of sending FCM from the server. History is still written to `push_notification_log` by the API.
+3. Leave `FIREBASE_SERVICE_ACCOUNT_JSON` unset (or keep it for Auth only). The notification service will call the function instead of sending FCM from the server. History is still written to `push_notification_log` by the API.
 
 ## 7. Troubleshooting
 
