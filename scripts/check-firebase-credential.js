@@ -74,8 +74,31 @@ try {
     credential: admin.credential.cert(parsed),
     projectId: parsed.project_id
   });
-  console.log('Firebase initialized successfully.');
-  process.exit(0);
+  // Actually fetch a token so invalid_grant is caught here, not on first FCM send
+  const app = admin.app();
+  const cred = app.options.credential;
+  if (cred && typeof cred.getAccessToken === 'function') {
+    cred.getAccessToken()
+      .then(() => {
+        console.log('Access token fetched successfully.');
+        console.log('Firebase initialized successfully.');
+        process.exit(0);
+      })
+      .catch((tokenErr) => {
+        console.error('Token fetch failed:', tokenErr.message);
+        if ((tokenErr.message || '').includes('invalid_grant')) {
+          console.error('');
+          console.error('Invalid JWT usually means:');
+          console.error('  1. Server time is wrong – sync with NTP (see above).');
+          console.error('  2. Key was revoked – generate a new key in Firebase Console.');
+          console.error('  3. Key is truncated – use base64 for FIREBASE_SERVICE_ACCOUNT_JSON.');
+        }
+        process.exit(1);
+      });
+  } else {
+    console.log('Firebase initialized successfully.');
+    process.exit(0);
+  }
 } catch (err) {
   console.error('Firebase init failed:', err.message);
   if (err.message && err.message.includes('invalid_grant')) {
