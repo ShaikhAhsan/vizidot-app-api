@@ -2,9 +2,12 @@
 
 Send FCM push notifications in batches with history stored in the database.
 
+You can send either **from your API** (Firebase Admin on the server) or **via a Firebase Cloud Function** (recommended if you have credential/time issues on the server). Same API; the service switches automatically when the function URL and secret are set.
+
 ## 1. Prerequisites
 
-- **Firebase**: `FIREBASE_SERVICE_ACCOUNT_JSON` must be set (same as for Auth). Firebase Admin is initialized in `server.js` via `initializeFirebase()`.
+- **Option A – Send from your API**: `FIREBASE_SERVICE_ACCOUNT_JSON` must be set (same as for Auth). Firebase Admin is initialized in `server.js` via `initializeFirebase()`.
+- **Option B – Send via Firebase Function**: Deploy the function in `functions/` (see repo root `functions/README.md`), then set `FIREBASE_SEND_PUSH_FUNCTION_URL` and `FIREBASE_SEND_PUSH_SECRET` on your API. No Firebase credentials needed on the server.
 - **Database**: Create the notification log table once (see below).
 
 ## 2. Create the notification log table
@@ -49,7 +52,18 @@ const result = await sendPushNotification({
 
 Use **GET /api/v1/device/tokens?userIds=1,2,3** (auth required) to get tokens by user IDs. Response: `{ tokensByUser: { "1": ["fcm1", "fcm2"], "2": ["fcm3"] } }`. Flatten the arrays if you need a single list for `fcmTokens`.
 
-## 6. Troubleshooting
+## 6. Sending via Firebase Cloud Function
+
+If your server has Firebase credential or time-sync issues (e.g. in Docker/Coolify), use the Firebase Function:
+
+1. Deploy the function: from repo root run `firebase deploy --only functions` (see `functions/README.md`).
+2. Set the function secret in Firebase (`firebase functions:config:set send_push.secret="..."` or env in Console).
+3. On your API server set:
+   - `FIREBASE_SEND_PUSH_FUNCTION_URL` = the deployed function URL
+   - `FIREBASE_SEND_PUSH_SECRET` = the same secret
+4. Leave `FIREBASE_SERVICE_ACCOUNT_JSON` unset (or keep it for Auth only). The notification service will call the function instead of sending FCM from the server. History is still written to `push_notification_log` by the API.
+
+## 7. Troubleshooting
 
 - **Token works in Firebase Console "Send test message" but fails from API (successCount: 0)**  
   The FCM token is tied to a **Firebase project**. The service account in `FIREBASE_SERVICE_ACCOUNT_JSON` must be for the **same project** as the app that generated the token.  

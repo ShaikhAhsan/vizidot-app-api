@@ -56,7 +56,88 @@ function stringifyData(data) {
 }
 
 /**
+ * Send push via Firebase Cloud Function (HTTP). Logs to push_notification_log.
+ */
+async function sendViaFirebaseFunction({ title, message, tokens, data, imageUrl, functionUrl, functionSecret }) {
+  const total = tokens.length;
+  let logRow = null;
+  try {
+    logRow = await PushNotificationLog.create({
+      title: String(title).slice(0, 255),
+      message: String(message),
+      image_url: imageUrl && String(imageUrl).trim() || null,
+      custom_data: data ? JSON.stringify(stringifyData(data)) : null,
+      token_count: total,
+      success_count: 0,
+      failure_count: 0,
+      status: 'pending'
+    });
+  } catch (dbErr) {
+    console.warn('notificationService: could not create log row (table may not exist):', dbErr.message);
+  }
+
+  if (total === 0) {
+    if (logRow) await logRow.update({ status: 'completed', success_count: 0, failure_count: 0 });
+    return { successCount: 0, failureCount: 0, total: 0, logId: logRow ? logRow.id : null };
+  }
+
+  let successCount = 0;
+  let failureCount = 0;
+  let errors = [];
+
+  try {
+    const res = await fetch(functionUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: functionSecret,
+        title,
+        message,
+        fcmTokens: tokens,
+        data: data ? stringifyData(data) : undefined,
+        imageUrl: imageUrl && String(imageUrl).trim() || undefined
+      })
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(body.error || body.message || `HTTP ${res.status}`);
+    }
+    successCount = body.successCount ?? 0;
+    failureCount = body.failureCount ?? 0;
+    errors = body.errors || [];
+  } catch (err) {
+    failureCount = total;
+    errors = [err.message || String(err)];
+  }
+
+  const status = failureCount === 0 ? 'completed' : (successCount === 0 ? 'failed' : 'partial');
+  const errorSummary = errors.length ? errors.slice(0, 5).join('; ').slice(0, 500) : null;
+  if (logRow) {
+    try {
+      await logRow.update({
+        success_count: successCount,
+        failure_count: failureCount,
+        status,
+        error_summary: errorSummary
+      });
+    } catch (e) {
+      console.warn('notificationService: could not update log row:', e.message);
+    }
+  }
+
+  return {
+    successCount,
+    failureCount,
+    total,
+    logId: logRow ? logRow.id : null,
+    errors: errors.length ? errors.slice(0, 10) : undefined
+  };
+}
+
+/**
  * Send push notification to many FCM tokens in batches. Logs to push_notification_log.
+ * If FIREBASE_SEND_PUSH_FUNCTION_URL and FIREBASE_SEND_PUSH_SECRET are set, calls the
+ * Firebase Cloud Function instead (avoids credential/time issues on your server).
  *
  * @param {Object} options
  * @param {string} options.title - Notification title
@@ -64,7 +145,7 @@ function stringifyData(data) {
  * @param {string[]} options.fcmTokens - Array of FCM device tokens (deduplicated inside)
  * @param {Object} [options.data] - Custom key-value data (all values stringified). Passed in notification data payload.
  * @param {string} [options.imageUrl] - Optional image URL for the notification
- * @returns {Promise<{ successCount: number, failureCount: number, total: number, logId: number | null }>}
+ * @returns {Promise<{ successCount: number, failureCount: number, total: number, logId: number | null, errors?: string[] }>}
  */
 async function sendPushNotification({ title, message, fcmTokens = [], data, imageUrl }) {
   const tokens = [...new Set((fcmTokens || []).filter((t) => t && String(t).trim()))];
@@ -72,6 +153,20 @@ async function sendPushNotification({ title, message, fcmTokens = [], data, imag
 
   if (!title || !message) {
     throw new Error('title and message are required');
+  }
+
+  const functionUrl = (process.env.FIREBASE_SEND_PUSH_FUNCTION_URL || '').trim();
+  const functionSecret = (process.env.FIREBASE_SEND_PUSH_SECRET || '').trim();
+  if (functionUrl && functionSecret) {
+    return sendViaFirebaseFunction({
+      title,
+      message,
+      tokens,
+      data,
+      imageUrl,
+      functionUrl,
+      functionSecret
+    });
   }
 
   let messaging;
