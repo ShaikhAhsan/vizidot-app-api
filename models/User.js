@@ -46,6 +46,11 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(500),
     allowNull: true
   },
+  profile_image_thumb: {
+    type: DataTypes.STRING(500),
+    allowNull: true,
+    comment: 'Thumbnail URL for profile image (e.g. from Firebase Storage)'
+  },
   primary_role: {
     type: DataTypes.STRING(50),
     allowNull: true,

@@ -56,7 +56,8 @@ const initializeFirebase = async () => {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       databaseURL: process.env.FIREBASE_DATABASE_URL || 'https://vizidot-4b492.firebaseio.com',
-      projectId: process.env.FIREBASE_PROJECT_ID || 'vizidot-4b492'
+      projectId: process.env.FIREBASE_PROJECT_ID || 'vizidot-4b492',
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'vizidot-4b492.appspot.com'
     });
 
     db = admin.firestore();
@@ -111,6 +112,14 @@ const getMessaging = () => {
     throw new Error('Firebase not initialized. Call initializeFirebase() first.');
   }
   return admin.messaging();
+};
+
+/** Get Storage instance for file uploads (e.g. profile images). Requires Firebase to be initialized. */
+const getStorage = () => {
+  if (!admin.apps.length) {
+    throw new Error('Firebase not initialized. Call initializeFirebase() first.');
+  }
+  return admin.storage();
 };
 
 // Firebase utility functions
@@ -201,6 +210,7 @@ module.exports = {
   initializeFirebase,
   getFirebaseInstance,
   getMessaging,
+  getStorage,
   firebaseUtils
 };
 
