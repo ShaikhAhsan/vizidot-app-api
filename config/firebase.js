@@ -49,6 +49,10 @@ const initializeFirebase = async () => {
       return parsed;
     })();
 
+    // Log server time so you can spot clock skew (invalid_grant is often caused by wrong time)
+    const now = new Date();
+    console.log('🕐 Server time at Firebase init:', now.toISOString(), '(if this is wrong, sync with NTP)');
+
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       databaseURL: process.env.FIREBASE_DATABASE_URL || 'https://vizidot-4b492.firebaseio.com',
@@ -62,6 +66,24 @@ const initializeFirebase = async () => {
     db.settings({
       ignoreUndefinedProperties: true
     });
+
+    // Force a token fetch now so invalid_grant fails at startup with a clear message
+    const app = admin.app();
+    const cred = app.options.credential;
+    if (cred && typeof cred.getAccessToken === 'function') {
+      try {
+        await cred.getAccessToken();
+      } catch (tokenErr) {
+        console.error('❌ Firebase credential cannot get access token:', tokenErr.message);
+        if ((tokenErr.message || '').includes('invalid_grant') || (tokenErr.message || '').includes('JWT')) {
+          console.error('   → Fix (1): Sync server time on the machine running this API:');
+          console.error('      sudo timedatectl set-ntp true   # or: sudo ntpdate -s time.google.com');
+          console.error('   → Fix (2): Use a NEW key from Firebase Console (same project as your app),');
+          console.error('      set FIREBASE_SERVICE_ACCOUNT_JSON as base64 to avoid truncation.');
+        }
+        throw tokenErr;
+      }
+    }
 
     console.log('Firebase Admin SDK initialized successfully');
     return { admin, db, auth };
