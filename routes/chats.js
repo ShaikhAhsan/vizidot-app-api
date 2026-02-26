@@ -7,7 +7,8 @@ const { UserArtist } = require('../models');
 /**
  * GET /api/v1/chats/messages
  * Query: chatDocId (required), before (ISO date string, optional), limit (default 20, max 50)
- * Returns older messages from MySQL (history) for pagination. Real-time messages stay in Firebase.
+ * - Omit "before" for initial load: returns the most recent messages (up to limit).
+ * - Send "before" with an older message's createdAt for the next page (older messages).
  * Auth required. Caller must be either the fan or the artist (user_artists).
  */
 router.get('/messages', authenticateToken, async (req, res) => {
