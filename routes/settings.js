@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { UserSettings, AppSetting, User, sequelize } = require('../models');
+const { UserSettings, AppSetting, User, UserArtist, Artist, sequelize } = require('../models');
 const { authenticateToken, optionalAuth } = require('../middleware/authWithRoles');
 const { uploadBufferToPath, isGCSAvailable } = require('../services/googleCloudStorage');
 const Jimp = require('jimp');
@@ -63,6 +63,32 @@ router.get('/', optionalAuth, async (req, res) => {
           caption: typeof caption === 'string' ? caption : '',
           isOnboarded
         };
+        // Assigned artists (user_artists): include artist profile for each
+        let assignedArtists = [];
+        try {
+          const userArtists = await UserArtist.findAll({
+            where: { user_id: userId },
+            include: [{ model: Artist, as: 'artist', attributes: ['artist_id', 'name', 'image_url', 'bio', 'country', 'is_active', 'is_featured', 'is_rising_star'] }]
+          });
+          assignedArtists = userArtists
+            .map((ua) => ua.artist)
+            .filter(Boolean)
+            .map((a) => ({
+              artistId: a.artist_id,
+              name: a.name || '',
+              imageUrl: a.image_url || null,
+              bio: a.bio || null,
+              country: a.country || null,
+              isActive: !!a.is_active,
+              isFeatured: !!a.is_featured,
+              isRisingStar: !!a.is_rising_star
+            }));
+        } catch (artistErr) {
+          console.warn('GET /settings: could not load assigned artists:', artistErr.message);
+        }
+        if (assignedArtists.length > 0) {
+          profile.assignedArtists = assignedArtists;
+        }
       }
     }
 
