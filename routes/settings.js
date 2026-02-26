@@ -3,6 +3,7 @@ const router = express.Router();
 const { UserSettings, AppSetting, User, UserArtist, Artist, sequelize } = require('../models');
 const { authenticateToken, optionalAuth } = require('../middleware/authWithRoles');
 const { uploadBufferToPath, isGCSAvailable } = require('../services/googleCloudStorage');
+const { run: runMigrateChatMessages } = require('../services/migrateChatMessages');
 const Jimp = require('jimp');
 const convertHeic = require('heic-convert');
 
@@ -361,6 +362,47 @@ router.post('/profile-image', authenticateToken, (req, res, next) => {
     }
     console.log('[profile-image] API response (500):', JSON.stringify(payload));
     return res.status(500).json(payload);
+  }
+});
+
+/**
+ * POST /api/v1/settings/migrate-chat-messages
+ * Migrates chat messages from Firestore to MySQL (messages older than hoursAgo).
+ * Protected by MIGRATE_CHAT_MESSAGES_SECRET: send header X-Migration-Key or query key.
+ * Body or query: hoursAgo (optional, default 24).
+ * Returns { success, data: { moved, deleted } }.
+ */
+router.post('/migrate-chat-messages', async (req, res) => {
+  const secret = (process.env.MIGRATE_CHAT_MESSAGES_SECRET || '').trim();
+  if (!secret) {
+    return res.status(503).json({
+      success: false,
+      error: 'Migration not configured. Set MIGRATE_CHAT_MESSAGES_SECRET on the server.'
+    });
+  }
+  const key = (req.headers['x-migration-key'] || req.query.key || req.body?.key || '').trim();
+  if (key !== secret) {
+    const hint = process.env.NODE_ENV === 'development'
+      ? { hint: 'Send the exact value of MIGRATE_CHAT_MESSAGES_SECRET from .env in header X-Migration-Key or in body as {"key": "..."}. Received key length: ' + key.length }
+      : undefined;
+    return res.status(403).json({ success: false, error: 'Forbidden', ...hint });
+  }
+
+  const hoursAgo = parseInt(req.body?.hoursAgo ?? req.query.hoursAgo ?? '24', 10);
+  const options = { hoursAgo: Number.isFinite(hoursAgo) && hoursAgo > 0 ? hoursAgo : 24 };
+
+  try {
+    const result = await runMigrateChatMessages(options);
+    return res.json({
+      success: true,
+      data: { moved: result.moved, deleted: result.deleted }
+    });
+  } catch (err) {
+    console.error('POST /settings/migrate-chat-messages error:', err);
+    return res.status(500).json({
+      success: false,
+      error: err.message || 'Migration failed'
+    });
   }
 });
 

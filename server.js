@@ -26,6 +26,7 @@ const musicRoutes = require('./routes/music');
 const settingsRoutes = require('./routes/settings');
 const deviceRoutes = require('./routes/device');
 const notificationRoutes = require('./routes/notifications');
+const chatsRoutes = require('./routes/chats');
 
 const app = express();
 // Port: default 8000, override with PORT env (e.g. PORT=8001 when 8000 is in use)
@@ -131,6 +132,7 @@ app.use('/api/v1/device', deviceRoutes);
 // Fallback: if a reverse proxy strips /api/v1, device routes still work at /device/*
 app.use('/device', deviceRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/chats', chatsRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
