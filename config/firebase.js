@@ -3,6 +3,47 @@ const path = require('path');
 
 let db, auth;
 
+/** Parse and normalize service account from env (for sync init). Returns null if not set or invalid. */
+function getServiceAccountFromEnv() {
+  const rawValue = (process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '').trim();
+  if (!rawValue) return null;
+  const maybeDecoded = rawValue.startsWith('{')
+    ? rawValue
+    : Buffer.from(rawValue, 'base64').toString('utf8');
+  let parsed;
+  try {
+    parsed = JSON.parse(maybeDecoded);
+  } catch (_) {
+    return null;
+  }
+  let key = parsed.private_key;
+  if (!key || typeof key !== 'string') return null;
+  if (key.includes('\\n')) key = key.replace(/\\n/g, '\n');
+  key = key.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  parsed.private_key = key;
+  if (!key.includes('BEGIN PRIVATE KEY') || !key.includes('END PRIVATE KEY')) return null;
+  return parsed;
+}
+
+/** Initialize Firebase from env when this module loads, so env credential is used before firebaseAuth loads. */
+function initializeFirebaseSyncIfSet() {
+  if (admin.apps.length > 0) return;
+  const serviceAccount = getServiceAccountFromEnv();
+  if (!serviceAccount) return;
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      databaseURL: process.env.FIREBASE_DATABASE_URL || 'https://vizidot-4b492.firebaseio.com',
+      projectId: process.env.FIREBASE_PROJECT_ID || 'vizidot-4b492',
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'vizidot-4b492.appspot.com'
+    });
+    console.log('🔥 Firebase initialized from FIREBASE_SERVICE_ACCOUNT_JSON (sync)');
+  } catch (e) {
+    console.error('Firebase sync init failed:', e.message);
+  }
+}
+initializeFirebaseSyncIfSet();
+
 const initializeFirebase = async () => {
   try {
     // Check if Firebase is already initialized
@@ -35,11 +76,12 @@ const initializeFirebase = async () => {
       if (!key || typeof key !== 'string') {
         throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is missing "private_key". Re-download the service account JSON from Firebase Console.');
       }
-      // Env vars often turn newlines into literal \n (backslash + n). Restore real newlines for PEM.
-      if (key.includes('\\n') && !key.includes('\n')) {
-        parsed.private_key = key.replace(/\\n/g, '\n');
-        key = parsed.private_key;
+      // Normalize PEM newlines (same as getServiceAccountFromEnv)
+      if (key.includes('\\n')) {
+        key = key.replace(/\\n/g, '\n');
       }
+      key = key.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      parsed.private_key = key;
       if (!key.includes('BEGIN PRIVATE KEY') || !key.includes('END PRIVATE KEY')) {
         throw new Error(
           'FIREBASE_SERVICE_ACCOUNT_JSON "private_key" looks truncated or invalid. ' +

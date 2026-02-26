@@ -1,112 +1,85 @@
 #!/usr/bin/env node
 /**
- * Run on the server to diagnose Firebase credential / JWT errors.
- * Usage: node scripts/check-firebase-credential.js
- *
- * Checks: server time, env var presence, private_key shape, then tries to initialize Firebase.
+ * Step-by-step check of FIREBASE_SERVICE_ACCOUNT_JSON.
+ * Run: node scripts/check-firebase-credential.js
+ * Fixes "Invalid JWT Signature" by validating the key and testing token fetch.
  */
-require('dotenv').config({ override: false });
+require('dotenv').config();
 
-const serverTime = new Date();
-const serverTimeStr = serverTime.toISOString();
-const serverTimestamp = Math.floor(serverTime.getTime() / 1000);
-const realTimestamp = Math.floor(Date.now() / 1000);
+const rawValue = (process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '').trim();
+console.log('Step 1: FIREBASE_SERVICE_ACCOUNT_JSON set?', rawValue ? `Yes (${rawValue.length} chars)` : 'No');
 
-console.log('--- Server time ---');
-console.log('Server time (ISO):', serverTimeStr);
-console.log('Server timestamp:', serverTimestamp);
-console.log('');
-console.log('If this time is wrong by more than 1–2 minutes, Firebase will reject the JWT.');
-console.log('Fix: sync time (e.g. sudo timedatectl set-ntp true or ntpdate).');
-console.log('');
-
-const raw = (process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '').trim();
-if (!raw) {
-  console.error('FIREBASE_SERVICE_ACCOUNT_JSON is not set.');
+if (!rawValue) {
+  console.log('→ Set FIREBASE_SERVICE_ACCOUNT_JSON in .env (minified JSON in single quotes, or base64).');
   process.exit(1);
 }
 
-const isBase64 = !raw.startsWith('{');
-const jsonStr = isBase64 ? Buffer.from(raw, 'base64').toString('utf8') : raw;
-console.log('--- Credential ---');
-console.log('Format:', isBase64 ? 'base64' : 'raw JSON');
-console.log('Length (chars):', raw.length);
-if (isBase64) {
-  console.log('Decoded length:', jsonStr.length);
-}
+const isBase64 = !rawValue.startsWith('{');
+const maybeDecoded = isBase64 ? Buffer.from(rawValue, 'base64').toString('utf8') : rawValue;
+console.log('Step 2: Format', isBase64 ? 'base64' : 'JSON', '- decoded length:', maybeDecoded.length);
 
 let parsed;
 try {
-  parsed = JSON.parse(jsonStr);
+  parsed = JSON.parse(maybeDecoded);
+  console.log('Step 3: JSON parse OK, project_id:', parsed.project_id);
 } catch (e) {
-  console.error('JSON parse error:', e.message);
+  console.log('Step 3: JSON parse FAILED:', e.message);
   process.exit(1);
 }
 
 let key = parsed.private_key;
-console.log('Has private_key:', !!key);
-if (key) {
-  // Env vars often store newlines as literal \n (backslash + n). Fix for PEM.
-  if (key.includes('\\n') && !key.includes('\n')) {
-    parsed.private_key = key.replace(/\\n/g, '\n');
-    key = parsed.private_key;
-    console.log('Fixed private_key: replaced literal \\n with real newlines.');
-  }
-  const hasBegin = key.includes('BEGIN PRIVATE KEY');
-  const hasEnd = key.includes('END PRIVATE KEY');
-  console.log('Private key has BEGIN/END:', hasBegin && hasEnd);
-  if (!hasBegin || !hasEnd) {
-    console.error('Private key looks truncated. Set FIREBASE_SERVICE_ACCOUNT_JSON as base64.');
-    console.error('Example: base64 -w 0 your-key.json | pbcopy  (Linux/Mac) then paste as env value.');
-    process.exit(1);
-  }
-}
-console.log('Project ID:', parsed.project_id || '(missing)');
-console.log('');
-
-console.log('--- Initializing Firebase ---');
-const admin = require('firebase-admin');
-try {
-  if (admin.apps.length > 0) {
-    admin.app().delete();
-  }
-  admin.initializeApp({
-    credential: admin.credential.cert(parsed),
-    projectId: parsed.project_id
-  });
-  // Actually fetch a token so invalid_grant is caught here, not on first FCM send
-  const app = admin.app();
-  const cred = app.options.credential;
-  if (cred && typeof cred.getAccessToken === 'function') {
-    cred.getAccessToken()
-      .then(() => {
-        console.log('Access token fetched successfully.');
-        console.log('Firebase initialized successfully.');
-        process.exit(0);
-      })
-      .catch((tokenErr) => {
-        console.error('Token fetch failed:', tokenErr.message);
-        if ((tokenErr.message || '').includes('invalid_grant')) {
-          console.error('');
-          console.error('Invalid JWT usually means:');
-          console.error('  1. Server time is wrong – sync with NTP (see above).');
-          console.error('  2. Key was revoked – generate a new key in Firebase Console.');
-          console.error('  3. Key is truncated – use base64 for FIREBASE_SERVICE_ACCOUNT_JSON.');
-        }
-        process.exit(1);
-      });
-  } else {
-    console.log('Firebase initialized successfully.');
-    process.exit(0);
-  }
-} catch (err) {
-  console.error('Firebase init failed:', err.message);
-  if (err.message && err.message.includes('invalid_grant')) {
-    console.error('');
-    console.error('Invalid JWT usually means:');
-    console.error('  1. Server time is wrong – sync with NTP (see above).');
-    console.error('  2. Key was revoked – generate a new key in Firebase Console → Project settings → Service accounts.');
-    console.error('  3. Key is truncated – use base64 for FIREBASE_SERVICE_ACCOUNT_JSON.');
-  }
+if (!key || typeof key !== 'string') {
+  console.log('Step 4: private_key missing or not a string');
   process.exit(1);
 }
+console.log('Step 4: private_key length:', key.length);
+
+const hasBackslashN = key.includes('\\n');
+const hasNewline = key.includes('\n');
+console.log('Step 5: Key has \\n (backslash-n)?', hasBackslashN, '| has real newline?', hasNewline);
+
+if (hasBackslashN) {
+  key = key.replace(/\\n/g, '\n');
+}
+key = key.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+parsed.private_key = key;
+
+const hasBegin = key.includes('BEGIN PRIVATE KEY');
+const hasEnd = key.includes('END PRIVATE KEY');
+const newlineCount = (key.match(/\n/g) || []).length;
+console.log('Step 6: PEM format? BEGIN:', hasBegin, 'END:', hasEnd, 'newlines:', newlineCount);
+
+if (!hasBegin || !hasEnd) {
+  console.log('→ Key is truncated or invalid. Use base64: save JSON to key.json then run:');
+  console.log('  node -e "console.log(require(\'fs\').readFileSync(\'key.json\', \'base64\'))"');
+  process.exit(1);
+}
+
+console.log('Step 7: Initializing Firebase and fetching access token...');
+const admin = require('firebase-admin');
+if (admin.apps.length > 0) {
+  admin.app().delete();
+}
+admin.initializeApp({
+  credential: admin.credential.cert(parsed),
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET || 'vizidot-4b492.appspot.com'
+});
+
+const cred = admin.app().options.credential;
+cred.getAccessToken()
+  .then((token) => {
+    console.log('Step 8: Access token OK (expires:', token.expiration_time, ')');
+    console.log('→ Credential is valid. Restart the API and try profile upload again.');
+    process.exit(0);
+  })
+  .catch((err) => {
+    console.log('Step 8: Access token FAILED:', err.message);
+    if ((err.message || '').includes('invalid_grant') || (err.message || '').includes('JWT')) {
+      console.log('→ Invalid JWT Signature usually means:');
+      console.log('  1) Private key was regenerated in Firebase Console – download a NEW key and replace .env');
+      console.log('  2) Server time is wrong – run: sudo timedatectl set-ntp true');
+      console.log('  3) Key was corrupted in .env – use base64: save JSON to file, then');
+      console.log('     node -e "console.log(require(\'fs\').readFileSync(\'path-to-key.json\', \'base64\'))"');
+    }
+    process.exit(1);
+  });

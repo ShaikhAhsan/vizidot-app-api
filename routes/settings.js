@@ -1,7 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const path = require('path');
-const fs = require('fs').promises;
 const { UserSettings, AppSetting, User, sequelize } = require('../models');
 const { authenticateToken, optionalAuth } = require('../middleware/authWithRoles');
 const { uploadBufferToPath, isGCSAvailable } = require('../services/googleCloudStorage');
@@ -278,40 +276,29 @@ router.post('/profile-image', authenticateToken, (req, res, next) => {
     const thumbPath = `${basePath}/avatar_thumb.jpg`;
     const contentType = (mime === 'image/heic' || mime === 'image/heif') ? 'image/jpeg' : (req.file.mimetype || 'image/jpeg');
 
-    let profileImageUrl = null;
-    let profileImageThumbUrl = null;
-
-    if (isGCSAvailable()) {
-      try {
-        const [fullResult, thumbResult] = await Promise.all([
-          uploadBufferToPath(buffer, fullPath, contentType),
-          uploadBufferToPath(thumbBuffer, thumbPath, 'image/jpeg'),
-        ]);
-        profileImageUrl = fullResult.url;
-        profileImageThumbUrl = thumbResult.url;
-      } catch (firebaseErr) {
-        console.error('Firebase Storage upload failed, falling back to local storage:', firebaseErr.message);
-      }
+    // Upload to Firebase Storage only (same as vizidot-admin-api) — no local fallback
+    if (!isGCSAvailable()) {
+      const payload = { success: false, error: 'Profile image upload is not configured. Set FIREBASE_SERVICE_ACCOUNT_JSON (and ensure Firebase Storage is enabled) on the server.' };
+      console.log('[profile-image] API response (503):', JSON.stringify(payload));
+      return res.status(503).json(payload);
     }
 
-    if (!profileImageUrl || !profileImageThumbUrl) {
-      try {
-        const uploadsDir = path.join(__dirname, '../uploads', basePath);
-        await fs.mkdir(uploadsDir, { recursive: true });
-        const localFull = path.join(uploadsDir, 'avatar.jpg');
-        const localThumb = path.join(uploadsDir, 'avatar_thumb.jpg');
-        await fs.writeFile(localFull, buffer);
-        await fs.writeFile(localThumb, thumbBuffer);
-        const baseUrl = (process.env.BASE_URL || process.env.API_BASE_URL || `http://localhost:${process.env.PORT || 8000}`).replace(/\/$/, '');
-        profileImageUrl = `${baseUrl}/uploads/${basePath}/avatar.jpg`;
-        profileImageThumbUrl = `${baseUrl}/uploads/${basePath}/avatar_thumb.jpg`;
-      } catch (localErr) {
-        console.error('Local storage fallback failed:', localErr);
-        return res.status(500).json({
-          success: false,
-          error: `Upload failed. ${localErr.message || 'Could not save image locally.'}`,
-        });
-      }
+    let profileImageUrl;
+    let profileImageThumbUrl;
+    try {
+      const [fullResult, thumbResult] = await Promise.all([
+        uploadBufferToPath(buffer, fullPath, contentType),
+        uploadBufferToPath(thumbBuffer, thumbPath, 'image/jpeg'),
+      ]);
+      const ts = Date.now();
+      const appendCacheBust = (url) => (url && (url.includes('?') ? `${url}&t=${ts}` : `${url}?t=${ts}`)) || url;
+      profileImageUrl = appendCacheBust(fullResult.url);
+      profileImageThumbUrl = appendCacheBust(thumbResult.url);
+    } catch (firebaseErr) {
+      console.error('Firebase Storage profile image upload failed:', firebaseErr);
+      const payload = { success: false, error: firebaseErr.message || 'Failed to upload image to Firebase Storage.' };
+      console.log('[profile-image] API response (500):', JSON.stringify(payload));
+      return res.status(500).json(payload);
     }
 
     try {
@@ -322,13 +309,14 @@ router.post('/profile-image', authenticateToken, (req, res, next) => {
     } catch (updateErr) {
       console.error('Profile image User.update failed:', updateErr);
       const msg = (updateErr && updateErr.message) ? String(updateErr.message) : String(updateErr);
-      return res.status(500).json({ success: false, error: `Database update failed: ${msg}` });
+      const payload = { success: false, error: `Database update failed: ${msg}` };
+      console.log('[profile-image] API response (500):', JSON.stringify(payload));
+      return res.status(500).json(payload);
     }
 
-    return res.json({
-      success: true,
-      data: { profileImageUrl, profileImageThumbUrl }
-    });
+    const successPayload = { success: true, data: { profileImageUrl, profileImageThumbUrl } };
+    console.log('[profile-image] API response (200):', JSON.stringify(successPayload));
+    return res.json(successPayload);
   } catch (err) {
     if (err.message && err.message.includes('Only images')) {
       return res.status(400).json({ success: false, error: err.message });
@@ -345,6 +333,7 @@ router.post('/profile-image', authenticateToken, (req, res, next) => {
     if (process.env.NODE_ENV === 'development' && err) {
       payload.debug = { message: err.message, code: err.code, stack: err.stack };
     }
+    console.log('[profile-image] API response (500):', JSON.stringify(payload));
     return res.status(500).json(payload);
   }
 });
