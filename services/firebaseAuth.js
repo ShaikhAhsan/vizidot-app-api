@@ -1,33 +1,45 @@
 const admin = require('firebase-admin');
 const { User } = require('../models');
+const path = require('path');
+const fs = require('fs');
 
-// Initialize Firebase Admin SDK
-const initializeFirebase = () => {
-  try {
-    const serviceAccount = require('../vizidot-4b492-firebase-adminsdk-mmzox-c3a057f143.json');
-    
-    if (!admin.apps.length) {
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        databaseURL: `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com`
-      });
-    }
-    
-    console.log('🔥 Firebase Admin SDK initialized successfully');
+// Lazy Firebase: use already-initialized app (from config/firebase.js + FIREBASE_SERVICE_ACCOUNT_JSON) when present,
+// else try loading from service account file so auth works with either env or file.
+function getFirebaseAdmin() {
+  if (admin.apps.length > 0) {
     return admin;
-  } catch (error) {
-    console.error('❌ Error initializing Firebase Admin SDK:', error);
-    throw error;
   }
-};
+  if (firebaseAdmin) return firebaseAdmin;
+  return null;
+}
 
-// Initialize Firebase (with error handling)
-let firebaseAdmin;
+function initializeFromFile() {
+  const jsonPath = path.join(__dirname, '../vizidot-4b492-firebase-adminsdk-mmzox-c3a057f143.json');
+  if (!fs.existsSync(jsonPath)) {
+    throw new Error('Firebase service account file not found. Set FIREBASE_SERVICE_ACCOUNT_JSON in .env or add the JSON file.');
+  }
+  const serviceAccount = require(jsonPath);
+  if (!admin.apps.length) {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      databaseURL: `https://${serviceAccount.project_id}-default-rtdb.firebaseio.com`
+    });
+  }
+  console.log('🔥 Firebase Admin SDK initialized (from file)');
+  return admin;
+}
+
+// Initialize Firebase Admin SDK - prefer already-initialized (from config), else try file
+let firebaseAdmin = null;
 try {
-  firebaseAdmin = initializeFirebase();
+  if (admin.apps.length > 0) {
+    firebaseAdmin = admin;
+    console.log('🔥 Firebase Admin SDK using existing app (config/firebase.js)');
+  } else {
+    firebaseAdmin = initializeFromFile();
+  }
 } catch (error) {
-  console.error('Failed to initialize Firebase Admin SDK:', error);
-  // Don't throw - allow the module to load, but methods will fail gracefully
+  console.error('Firebase Auth init failed:', error.message);
   firebaseAdmin = null;
 }
 
@@ -37,10 +49,17 @@ class FirebaseAuthService {
    */
   static async verifyToken(idToken) {
     try {
-      if (!firebaseAdmin) {
+      let adminInstance = getFirebaseAdmin();
+      if (!adminInstance) {
+        try {
+          firebaseAdmin = initializeFromFile();
+          adminInstance = firebaseAdmin;
+        } catch (_) { /* already logged */ }
+      }
+      if (!adminInstance) {
         throw new Error('Firebase Admin SDK not initialized');
       }
-      const decodedToken = await firebaseAdmin.auth().verifyIdToken(idToken);
+      const decodedToken = await adminInstance.auth().verifyIdToken(idToken);
       return decodedToken;
     } catch (error) {
       console.error('Error verifying Firebase token:', error.message);
@@ -118,7 +137,9 @@ class FirebaseAuthService {
 
       // New Firebase user: get profile from Firebase, then create or re-link in MySQL
       console.log('User not found in DB, creating new user...');
-      const firebaseUser = await firebaseAdmin.auth().getUser(firebaseUid);
+      const adminInstance = getFirebaseAdmin();
+      if (!adminInstance) throw new Error('Firebase Admin SDK not initialized');
+      const firebaseUser = await adminInstance.auth().getUser(firebaseUid);
       const email = firebaseUser.email || `${firebaseUid}@firebase.local`;
       const displayParts = (firebaseUser.displayName || 'User').trim().split(/\s+/);
       const firstName = displayParts[0] || 'User';

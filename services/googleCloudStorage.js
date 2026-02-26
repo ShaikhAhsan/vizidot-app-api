@@ -58,8 +58,12 @@ const uploadToGCS = async (fileBuffer, fileName, folder = 'artists', contentType
       },
     });
 
-    // Make file publicly accessible
-    await file.makePublic();
+    // Make file publicly accessible (skip if bucket has uniform bucket-level access)
+    try {
+      await file.makePublic();
+    } catch (aclErr) {
+      console.warn('makePublic failed (bucket may use uniform access); file still uploaded:', aclErr.message);
+    }
 
     // Get public URL
     const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(uniqueFileName)}?alt=media`;
@@ -71,6 +75,36 @@ const uploadToGCS = async (fileBuffer, fileName, folder = 'artists', contentType
     };
   } catch (error) {
     console.error('Error uploading to Firebase Storage:', error);
+    throw error;
+  }
+};
+
+/**
+ * Upload buffer to a specific path (e.g. profiles/{uid}/avatar.jpg).
+ * Same pattern as uploadToGCS: save then makePublic, return firebasestorage URL.
+ * Used for profile avatars so path is stable per user.
+ */
+const uploadBufferToPath = async (fileBuffer, filePath, contentType = 'image/jpeg') => {
+  if (!isGCSAvailable()) {
+    throw new Error('Firebase Storage is not configured');
+  }
+  try {
+    const file = bucket.file(filePath);
+    await file.save(fileBuffer, {
+      metadata: {
+        contentType,
+        cacheControl: 'public, max-age=31536000',
+      },
+    });
+    try {
+      await file.makePublic();
+    } catch (aclErr) {
+      console.warn('makePublic failed (bucket may use uniform access); file still uploaded:', aclErr.message);
+    }
+    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(filePath)}?alt=media`;
+    return { fileName: filePath, url: publicUrl, bucket: bucket.name };
+  } catch (error) {
+    console.error('Error uploading to path:', filePath, error);
     throw error;
   }
 };
@@ -197,6 +231,7 @@ module.exports = {
   initializeFirebaseStorage,
   isGCSAvailable,
   uploadToGCS,
+  uploadBufferToPath,
   uploadImageWithThumbnail,
   deleteFromGCS,
   getFileUrl
