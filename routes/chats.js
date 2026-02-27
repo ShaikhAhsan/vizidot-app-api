@@ -30,7 +30,7 @@ router.post('/send-message', authenticateToken, async (req, res) => {
       baseUrl
     });
     if (!result.success) {
-      const status = result.error === 'Access denied to this chat' ? 403 : result.error === 'Recipient not found' || result.error === 'Invalid chatDocId format' ? 400 : 500;
+      const status = result.error === 'Access denied to this chat' ? 403 : result.error === 'Recipient not found' || result.error === 'Invalid chatDocId format' ? 400 : result.error && result.error.includes('Firebase credentials') ? 503 : 500;
       return res.status(status).json({ success: false, error: result.error });
     }
     return res.json({

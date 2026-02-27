@@ -90,70 +90,80 @@ async function sendChatMessage({ currentUserId, firebaseUid, chatDocId, text, ba
     return { success: false, error: 'Firebase not initialized' };
   }
 
-  const chatRef = db.collection(CHATS_COLLECTION).doc(chatDocId);
-  const messagesRef = chatRef.collection(MESSAGES_SUBCOLLECTION);
+  try {
+    const chatRef = db.collection(CHATS_COLLECTION).doc(chatDocId);
+    const messagesRef = chatRef.collection(MESSAGES_SUBCOLLECTION);
 
-  const messageData = {
-    text: trimmed,
-    senderId,
-    senderType,
-    createdAt: admin.firestore.FieldValue.serverTimestamp()
-  };
-  const messageRef = await messagesRef.add(messageData);
-  const messageId = messageRef.id;
+    const messageData = {
+      text: trimmed,
+      senderId,
+      senderType,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+    const messageRef = await messagesRef.add(messageData);
+    const messageId = messageRef.id;
 
-  const chatUpdate = {
-    lastMessage: trimmed,
-    lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
-    artistId,
-    userId: fanFirebaseUid
-  };
-  if (isArtist) {
-    chatUpdate.unreadByUser = admin.firestore.FieldValue.increment(1);
-  } else {
-    chatUpdate.unreadByArtist = admin.firestore.FieldValue.increment(1);
+    const chatUpdate = {
+      lastMessage: trimmed,
+      lastMessageAt: admin.firestore.FieldValue.serverTimestamp(),
+      artistId,
+      userId: fanFirebaseUid
+    };
+    if (isArtist) {
+      chatUpdate.unreadByUser = admin.firestore.FieldValue.increment(1);
+    } else {
+      chatUpdate.unreadByArtist = admin.firestore.FieldValue.increment(1);
+    }
+
+    const artist = await Artist.findByPk(artistId, { attributes: ['name', 'image_url'] });
+    const fanUser = await User.findOne({ where: { firebase_uid: fanFirebaseUid }, attributes: ['id', 'first_name', 'last_name', 'profile_image'] });
+    if (artist) {
+      chatUpdate.artistName = artist.name || null;
+      if (artist.image_url) chatUpdate.artistImageUrl = ensureAbsoluteImageUrl(artist.image_url, baseUrl);
+    }
+    if (fanUser) {
+      chatUpdate.userDisplayName = [fanUser.first_name, fanUser.last_name].filter(Boolean).join(' ').trim() || null;
+      if (fanUser.profile_image) chatUpdate.userPhotoURL = ensureAbsoluteImageUrl(fanUser.profile_image, baseUrl);
+    }
+
+    await chatRef.set(chatUpdate, { merge: true });
+
+    const data = {
+      notificationType: 'message',
+      userType: isArtist ? 'Artist' : 'user',
+      name: senderDisplayName,
+      chatDocId
+    };
+    if (isArtist) data.artistId = artistId;
+    else data.userId = firebaseUid;
+
+    await notifyUser({
+      recipientUserId,
+      chatDocId,
+      isSenderArtist: isArtist,
+      notificationType: 'message',
+      title: senderDisplayName,
+      body: 'sent a message',
+      data,
+      senderArtistId: isArtist ? artistId : null,
+      senderUserId: isArtist ? null : currentUserId,
+      messageCount: 1,
+      imageUrl: senderImageUrl,
+      recordInHistory: false,
+      skipPushIfOnScreen: true
+    });
+
+    const createdAt = new Date();
+    return { success: true, messageId, createdAt };
+  } catch (firebaseErr) {
+    const code = firebaseErr.code || (firebaseErr.message || '').match(/^\d+/)?.[0];
+    const isAuthError = code === 16 || code === 7 || (firebaseErr.message || '').toLowerCase().includes('unauthenticated') || (firebaseErr.message || '').toLowerCase().includes('invalid credential');
+    if (isAuthError) {
+      console.error('Firebase credential error (check FIREBASE_SERVICE_ACCOUNT_JSON and server time):', firebaseErr.message);
+      return { success: false, error: 'Server Firebase credentials invalid. Check FIREBASE_SERVICE_ACCOUNT_JSON and server time sync.' };
+    }
+    throw firebaseErr;
   }
-
-  const artist = await Artist.findByPk(artistId, { attributes: ['name', 'image_url'] });
-  const fanUser = await User.findOne({ where: { firebase_uid: fanFirebaseUid }, attributes: ['id', 'first_name', 'last_name', 'profile_image'] });
-  if (artist) {
-    chatUpdate.artistName = artist.name || null;
-    if (artist.image_url) chatUpdate.artistImageUrl = ensureAbsoluteImageUrl(artist.image_url, baseUrl);
-  }
-  if (fanUser) {
-    chatUpdate.userDisplayName = [fanUser.first_name, fanUser.last_name].filter(Boolean).join(' ').trim() || null;
-    if (fanUser.profile_image) chatUpdate.userPhotoURL = ensureAbsoluteImageUrl(fanUser.profile_image, baseUrl);
-  }
-
-  await chatRef.set(chatUpdate, { merge: true });
-
-  const data = {
-    notificationType: 'message',
-    userType: isArtist ? 'Artist' : 'user',
-    name: senderDisplayName,
-    chatDocId
-  };
-  if (isArtist) data.artistId = artistId;
-  else data.userId = firebaseUid;
-
-  await notifyUser({
-    recipientUserId,
-    chatDocId,
-    isSenderArtist: isArtist,
-    notificationType: 'message',
-    title: senderDisplayName,
-    body: 'sent a message',
-    data,
-    senderArtistId: isArtist ? artistId : null,
-    senderUserId: isArtist ? null : currentUserId,
-    messageCount: 1,
-    imageUrl: senderImageUrl,
-    recordInHistory: false,
-    skipPushIfOnScreen: true
-  });
-
-  const createdAt = new Date();
-  return { success: true, messageId, createdAt };
 }
 
 module.exports = {
