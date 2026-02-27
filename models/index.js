@@ -42,6 +42,8 @@ const AppSetting = require('./AppSetting');
 const Device = require('./Device');
 const UserDevice = require('./UserDevice');
 const PushNotificationLog = require('./PushNotificationLog');
+const UserNotification = require('./UserNotification');
+const UserPresence = require('./UserPresence');
 
 // Define associations
 const defineAssociations = () => {
@@ -70,6 +72,11 @@ const defineAssociations = () => {
   Device.hasMany(UserDevice, { foreignKey: 'device_id', as: 'userDevices' });
   UserDevice.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
   UserDevice.belongsTo(Device, { foreignKey: 'device_id', as: 'device' });
+
+  User.hasMany(UserNotification, { foreignKey: 'recipient_user_id', as: 'notifications' });
+  UserNotification.belongsTo(User, { foreignKey: 'recipient_user_id', as: 'recipient' });
+  User.hasOne(UserPresence, { foreignKey: 'user_id', as: 'presence' });
+  UserPresence.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
   // User-Artist associations (many-to-many)
   User.belongsToMany(Artist, {
@@ -351,6 +358,8 @@ module.exports = {
   AppSetting,
   Device,
   UserDevice,
-  PushNotificationLog
+  PushNotificationLog,
+  UserNotification,
+  UserPresence
 };
 
