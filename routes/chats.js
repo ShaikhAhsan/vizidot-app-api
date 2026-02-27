@@ -6,7 +6,7 @@ const { UserArtist } = require('../models');
 
 /**
  * GET /api/v1/chats/messages
- * Query: chatDocId (required), before (ISO date string, optional), limit (default 20, max 50)
+ * Query: chatDocId (required), before (ISO date string, optional), limit (default 10, max 50)
  * - Omit "before" for initial load: returns the most recent messages (up to limit).
  * - Send "before" with an older message's createdAt for the next page (older messages).
  * Auth required. Caller must be either the fan or the artist (user_artists).
@@ -40,7 +40,7 @@ router.get('/messages', authenticateToken, async (req, res) => {
       return res.status(403).json({ success: false, error: 'Access denied to this chat' });
     }
 
-    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
+    const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 10));
     let before = req.query.before;
     let beforeDate = null;
     if (before) {
