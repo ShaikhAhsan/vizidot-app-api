@@ -3,6 +3,45 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/authWithRoles');
 const { sequelize } = require('../config/database');
 const { UserArtist } = require('../models');
+const { sendChatMessage } = require('../services/chatSendMessage');
+
+/**
+ * POST /api/v1/chats/send-message
+ * Body: { chatDocId: string, text: string }
+ * Sends message via API: writes to Firestore, updates chat doc, sends push to all recipient devices with latest sender name/image.
+ */
+router.post('/send-message', authenticateToken, async (req, res) => {
+  try {
+    const firebaseUid = req.firebaseUid || req.user?.firebase_uid;
+    const currentUserId = req.userId || req.user?.id;
+    if (!firebaseUid || !currentUserId) {
+      return res.status(401).json({ success: false, error: 'User not identified' });
+    }
+    const { chatDocId, text } = req.body || {};
+    if (!chatDocId || typeof chatDocId !== 'string' || !chatDocId.trim()) {
+      return res.status(400).json({ success: false, error: 'chatDocId is required' });
+    }
+    const baseUrl = (req.protocol + '://' + (req.get('host') || '')).replace(/\/$/, '');
+    const result = await sendChatMessage({
+      currentUserId,
+      firebaseUid,
+      chatDocId: chatDocId.trim(),
+      text: text != null ? String(text) : '',
+      baseUrl
+    });
+    if (!result.success) {
+      const status = result.error === 'Access denied to this chat' ? 403 : result.error === 'Recipient not found' || result.error === 'Invalid chatDocId format' ? 400 : 500;
+      return res.status(status).json({ success: false, error: result.error });
+    }
+    return res.json({
+      success: true,
+      data: { messageId: result.messageId, createdAt: result.createdAt }
+    });
+  } catch (err) {
+    console.error('POST /chats/send-message error:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Failed to send message' });
+  }
+});
 
 /**
  * GET /api/v1/chats/messages
