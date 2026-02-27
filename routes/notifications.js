@@ -112,7 +112,8 @@ router.post('/notify', authenticateToken, async (req, res) => {
       sender_artist_id: senderArtistId,
       sender_user_id: senderUserId,
       live_stream_id: liveStreamId,
-      message_count: messageCount
+      message_count: messageCount,
+      image_url: imageUrl
     } = req.body || {};
     if (!title || !body) {
       return res.status(400).json({ success: false, error: 'title and body are required' });
@@ -133,7 +134,8 @@ router.post('/notify', authenticateToken, async (req, res) => {
       senderArtistId: senderArtistId != null ? Number(senderArtistId) : null,
       senderUserId: senderUserId != null ? Number(senderUserId) : userId,
       liveStreamId: liveStreamId && String(liveStreamId) || null,
-      messageCount: messageCount != null ? Math.max(1, parseInt(messageCount, 10)) : 1
+      messageCount: messageCount != null ? Math.max(1, parseInt(messageCount, 10)) : 1,
+      imageUrl: imageUrl && typeof imageUrl === 'string' ? imageUrl.trim() || undefined : undefined
     });
     return res.json({
       success: true,

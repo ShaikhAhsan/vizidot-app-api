@@ -66,6 +66,7 @@ async function getFcmTokensForUser(userId) {
  * @param {number} [options.messageCount]
  * @param {boolean} [options.skipPushIfOnScreen] - if true, check presence and skip FCM when on same screen
  * @param {boolean} [options.recordInHistory] - if false, only send FCM (no row in user_notifications). Default true; false for type 'message'.
+ * @param {string} [options.imageUrl] - optional image URL for the push notification (e.g. sender avatar)
  */
 async function notifyUser(options) {
   const {
@@ -81,7 +82,8 @@ async function notifyUser(options) {
     liveStreamId = null,
     messageCount = 1,
     skipPushIfOnScreen = true,
-    recordInHistory = notificationType !== 'message'
+    recordInHistory = notificationType !== 'message',
+    imageUrl = null
   } = options;
 
   let recipientUserId = providedRecipientUserId;
@@ -137,7 +139,8 @@ async function notifyUser(options) {
       title: titleStr,
       message: bodyStr,
       fcmTokens: tokens,
-      data: { ...dataPayload, ...(row ? { notificationId: String(row.id) } : {}) }
+      data: { ...dataPayload, ...(row ? { notificationId: String(row.id) } : {}) },
+      imageUrl: imageUrl && String(imageUrl).trim() ? String(imageUrl).trim() : undefined
     });
     sent = result.successCount > 0;
     successCount = result.successCount || 0;
