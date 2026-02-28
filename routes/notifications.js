@@ -15,10 +15,11 @@
 
 const express = require('express');
 const router = express.Router();
+const { Op } = require('sequelize');
 const { authenticateToken } = require('../middleware/authWithRoles');
 const { sendPushNotification } = require('../services/notificationService');
 const { notifyUser } = require('../services/userNotificationService');
-const { PushNotificationLog, UserNotification, UserPresence } = require('../models');
+const { PushNotificationLog, UserNotification, UserPresence, User } = require('../models');
 
 /**
  * POST /api/v1/notifications/send
@@ -86,6 +87,68 @@ router.get('/history', authenticateToken, async (req, res) => {
 });
 
 // --- User notifications (record + FCM, history, presence) ---
+
+/**
+ * POST /api/v1/notifications/notify-live-stream
+ * Body: live_stream_id, artist_id, artist_name, image_url?
+ * Called by the artist when they start a live stream. Notifies everyone except the broadcaster,
+ * records each in user_notifications (notification history), and sends FCM. Tap opens the live stream.
+ */
+router.post('/notify-live-stream', authenticateToken, async (req, res) => {
+  try {
+    const broadcasterUserId = getCurrentUserId(req);
+    if (!broadcasterUserId) {
+      return res.status(401).json({ success: false, error: 'Unauthorized' });
+    }
+    const {
+      live_stream_id: liveStreamId,
+      artist_id: artistId,
+      artist_name: artistName,
+      image_url: imageUrl
+    } = req.body || {};
+    if (!liveStreamId || typeof liveStreamId !== 'string' || !liveStreamId.trim()) {
+      return res.status(400).json({ success: false, error: 'live_stream_id is required' });
+    }
+    const title = (artistName && String(artistName).trim()) || 'Artist';
+    const body = 'is live now';
+
+    const recipients = await User.findAll({
+      where: { id: { [Op.ne]: broadcasterUserId } },
+      attributes: ['id']
+    });
+
+    let recordedCount = 0;
+    let sentCount = 0;
+    for (const rec of recipients) {
+      const result = await notifyUser({
+        recipientUserId: rec.id,
+        notificationType: 'liveStream',
+        title,
+        body,
+        liveStreamId: liveStreamId.trim(),
+        recordInHistory: true,
+        senderArtistId: artistId != null ? Number(artistId) : null,
+        imageUrl: imageUrl && typeof imageUrl === 'string' ? imageUrl.trim() || undefined : undefined,
+        data: { liveStreamId: liveStreamId.trim() },
+        skipPushIfOnScreen: true
+      });
+      if (result.recorded) recordedCount++;
+      if (result.sent) sentCount += result.successCount || 1;
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        notifiedCount: recipients.length,
+        recordedCount,
+        sentCount
+      }
+    });
+  } catch (err) {
+    console.error('POST /notifications/notify-live-stream error:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Failed to notify' });
+  }
+});
 
 function getCurrentUserId(req) {
   return req.user?.id ?? req.userId;
