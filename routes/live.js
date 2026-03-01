@@ -1,8 +1,12 @@
 /**
  * GET /api/v1/live/rtc-token
  * Query: channelName (required), role (publisher | audience, default audience), uid (optional, default 0)
- * Returns Agora RTC token for the channel. Used when AGORA_APP_CERTIFICATE is set (production).
- * If certificate is not set, returns { token: null } and app can use empty token (Agora testing mode).
+ * Returns Agora RTC token for the channel.
+ *
+ * Required for join to succeed when Agora project has token auth enabled:
+ * - Set AGORA_APP_CERTIFICATE in .env (from Agora Console > Project > Primary Certificate).
+ * - If AGORA_APP_CERTIFICATE is not set, responds with { token: null }; app then joins with
+ *   empty token, which Agora rejects with -17 if the project requires a token.
  */
 
 const express = require('express');
