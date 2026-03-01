@@ -49,8 +49,9 @@ router.get('/rtc-token', (req, res) => {
   }
 
   const role = roleName === 'publisher' ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
-  const currentTs = Math.floor(Date.now() / 1000);
-  const expiry = currentTs + AGORA_TOKEN_EXPIRY_SECONDS;
+  // tokenExpire and privilegeExpire must be "seconds from now", not absolute timestamp.
+  const tokenExpire = AGORA_TOKEN_EXPIRY_SECONDS;
+  const privilegeExpire = AGORA_TOKEN_EXPIRY_SECONDS;
 
   let token;
   try {
@@ -60,13 +61,15 @@ router.get('/rtc-token', (req, res) => {
       channelName,
       uid,
       role,
-      expiry,
+      tokenExpire,
+      privilegeExpire,
     );
   } catch (e) {
     console.error('Agora token build error:', e);
     return res.status(500).json({ success: false, error: 'Failed to generate token' });
   }
 
+  const expireAt = Math.floor(Date.now() / 1000) + AGORA_TOKEN_EXPIRY_SECONDS;
   return res.json({
     success: true,
     data: {
@@ -75,7 +78,7 @@ router.get('/rtc-token', (req, res) => {
       channelName,
       uid,
       role: roleName,
-      expireAt: expiry,
+      expireAt,
     },
   });
 });
