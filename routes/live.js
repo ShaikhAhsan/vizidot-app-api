@@ -5,8 +5,8 @@
  *
  * Required for join to succeed when Agora project has token auth enabled:
  * - Set AGORA_APP_CERTIFICATE in .env (from Agora Console > Project > Primary Certificate).
- * - If AGORA_APP_CERTIFICATE is not set, responds with { token: null }; app then joins with
- *   empty token, which Agora rejects with -17 if the project requires a token.
+ * - App ID and Certificate must be from the SAME project; both must be 32-character hex strings.
+ * - If you get -17 with a token, the certificate does not match the App ID's project — copy Primary Certificate again from that project.
  */
 
 const express = require('express');
@@ -16,6 +16,10 @@ const { RtcTokenBuilder, RtcRole } = require('agora-token');
 const AGORA_APP_ID = (process.env.AGORA_APP_ID || '').trim();
 const AGORA_APP_CERTIFICATE = (process.env.AGORA_APP_CERTIFICATE || '').trim();
 const AGORA_TOKEN_EXPIRY_SECONDS = parseInt(process.env.AGORA_TOKEN_EXPIRY_SECONDS || '3600', 10); // 1 hour
+
+function isValidAgoraHex32(value) {
+  return typeof value === 'string' && value.length === 32 && /^[0-9a-fA-F]+$/.test(value);
+}
 
 router.get('/rtc-token', (req, res) => {
   const channelName = (req.query.channelName || '').trim();
@@ -48,8 +52,15 @@ router.get('/rtc-token', (req, res) => {
     });
   }
 
+  if (!isValidAgoraHex32(AGORA_APP_ID) || !isValidAgoraHex32(AGORA_APP_CERTIFICATE)) {
+    console.error('[live/rtc-token] AGORA_APP_ID and AGORA_APP_CERTIFICATE must be 32-character hex strings. Check .env');
+    return res.status(503).json({
+      success: false,
+      error: 'Invalid Agora config. AGORA_APP_ID and AGORA_APP_CERTIFICATE must be exactly 32 hex characters (from Agora Console).',
+    });
+  }
+
   const role = roleName === 'publisher' ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
-  // tokenExpire and privilegeExpire must be "seconds from now", not absolute timestamp.
   const tokenExpire = AGORA_TOKEN_EXPIRY_SECONDS;
   const privilegeExpire = AGORA_TOKEN_EXPIRY_SECONDS;
 
@@ -69,6 +80,12 @@ router.get('/rtc-token', (req, res) => {
     return res.status(500).json({ success: false, error: 'Failed to generate token' });
   }
 
+  if (!token || token.length === 0) {
+    console.error('[live/rtc-token] Token build returned empty. Check App ID and Certificate match the same Agora project.');
+    return res.status(500).json({ success: false, error: 'Token generation returned empty. Ensure AGORA_APP_CERTIFICATE is the Primary Certificate for the project that has this AGORA_APP_ID.' });
+  }
+
+  console.log('[live/rtc-token] token issued channel=' + channelName + ' uid=' + uid + ' role=' + roleName);
   const expireAt = Math.floor(Date.now() / 1000) + AGORA_TOKEN_EXPIRY_SECONDS;
   return res.json({
     success: true,
