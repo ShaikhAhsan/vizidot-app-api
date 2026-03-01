@@ -12,7 +12,8 @@
     "get-create-tables": "node scripts/getCreateTables.js",
     "test": "jest",
     "check-device": "node scripts/check-device-api.js",
-    "check-firebase": "node scripts/check-firebase-credential.js"
+    "check-firebase": "node scripts/check-firebase-credential.js",
+    "verify-agora": "node scripts/verify-agora-token.js"
   },
   "dependencies": {
     "agora-token": "^2.0.5",
